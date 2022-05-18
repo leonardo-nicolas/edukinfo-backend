@@ -1,4 +1,4 @@
-# Backend do projeto [EdukInfo](https://githum.com/prova-ecommerce-faculdade-av1) (Comércio eletrônico fictício)
+# Backend do projeto [EdukInfo](https://githum.com/leonardon397/prova-ecommerce-faculdade-av1) (Comércio eletrônico fictício)
 
 ## Seja bem-vindo!
 
