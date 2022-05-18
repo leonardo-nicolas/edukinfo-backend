@@ -6,13 +6,9 @@ use Bcrypt\Bcrypt;
 use DateTime;
 use DateTimeInterface;
 use EdukInfo\Exceptions\ArgumentoMuitoLongoException;
-use EdukInfo\Functions\FuncoesDiversas;
-use EdukInfo\Functions\StatusCodes;
 use EdukInfo\Functions\Validacao;
-use Exception;
 use InvalidArgumentException;
 use JetBrains\PhpStorm\ArrayShape;
-use LengthException;
 use mysqli;
 use mysqli_stmt;
 
@@ -305,11 +301,6 @@ class Usuario
         /** @var mysqli $db */
         $db = require("../db.php");
         $buscaUsuario = $db->prepare("SELECT * FROM Usuarios WHERE email = ?");
-        // O primeiro parâmetro do método'bind_param' (o $types), só aceita os seguintes argumentos:
-        // s -> String (para cadeia de caractéres longa)
-        // i -> Inteiro (para números inteiros)
-        // d -> Duplo (para números decimais por exemplo)
-        // b -> Booliano (para True ou False)
         $buscaUsuario->bind_param("s",$email);
         return self::fillDados($buscaUsuario,$db);
     }
