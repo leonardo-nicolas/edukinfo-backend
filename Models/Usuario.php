@@ -151,7 +151,7 @@ class Usuario
      * @throws InvalidArgumentException Ocorre quando não foi possível descobrir se o *$documento* é CPF ou CNPJ...
      */
     public function setDocumento(string $documento): Usuario {
-        $docNum = preg_replace("/\D/im","",$documento);
+        $docNum = preg_replace("/\D+/im","",$documento);
         $lenDoc = strlen($docNum);
         if($this->tipoCliente === TipoCliente::PessoaFisica && $lenDoc !== 11) {
             throw new ArgumentoMuitoLongoException('$documento (CPF)',11);
@@ -299,7 +299,7 @@ class Usuario
         // d -> Duplo (para números decimais por exemplo)
         // b -> Booliano (para True ou False)
         $buscaUsuario->bind_param("s",$id);
-        return self::fillDados($buscaUsuario,$db);
+        return self::fillDadosAfterGet($buscaUsuario,$db);
     }
     public static function getUsuarioByEmail(string $email):?Usuario{
         /** @var mysqli $db */
@@ -311,9 +311,9 @@ class Usuario
         // d -> Duplo (para números decimais por exemplo)
         // b -> Booliano (para True ou False)
         $buscaUsuario->bind_param("s",$email);
-        return self::fillDados($buscaUsuario,$db);
+        return self::fillDadosAfterGet($buscaUsuario,$db);
     }
-    private static function fillDados(mysqli_stmt &$buscaUsuario,mysqli &$db): ?Usuario{
+    private static function fillDadosAfterGet(mysqli_stmt &$buscaUsuario, mysqli &$db): ?Usuario{
         $buscaUsuario->execute();
         $resultadoBusca = $buscaUsuario->get_result();
         if($resultadoBusca->num_rows === 0) { return null; }
@@ -327,7 +327,7 @@ class Usuario
             ->setEmail((string)$resultado['email'])
             ->setSenhaDoDB((string)$resultado['senha']);
 
-        $buscaEndereco = $db->prepare("SELECT * FROM Endereco_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY id DESC");
+        $buscaEndereco = $db->prepare("SELECT * FROM Endereco_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY rand(id) DESC");
         $buscaEndereco->execute();
         $resultadoEnderecos = $buscaEndereco->get_result();
         while($linhasEnd = $resultadoEnderecos->fetch_assoc()){
@@ -344,7 +344,7 @@ class Usuario
                     ->setCep((string)$linhasEnd['cep'])
             );
         }
-        $buscaTelefone = $db->prepare("SELECT * FROM Telefones_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY id DESC");
+        $buscaTelefone = $db->prepare("SELECT * FROM Telefones_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY rand(id) DESC");
         $buscaTelefone->execute();
         $resultadoEnderecos = $buscaTelefone->get_result();
         while($linhasEnd = $resultadoEnderecos->fetch_assoc()){
