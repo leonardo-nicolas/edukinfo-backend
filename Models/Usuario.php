@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use JetBrains\PhpStorm\ArrayShape;
 use LengthException;
 use mysqli;
+use mysqli_sql_exception;
 use mysqli_stmt;
 
 class Usuario
@@ -362,5 +363,107 @@ class Usuario
         }
         unset($buscaTelefone,$buscaEndereco,$buscaUsuario,$resultadoBusca,$db);
         return $objUsuario;
+    }
+
+    public static function novoUsuario(Usuario $usuario): Usuario {
+        /** @var mysqli $db */
+        $db = require('../db.php');
+        $db->autocommit(false);
+        $insert = $db->prepare('INSERT INTO Usuarios(nome, sobrenome, documento, genero, aniversario, email, senha) VALUES (?,?,?,?,?,?,?)');
+        $documento = $usuario->tipoCliente === TipoCliente::PessoaFisica ? 'PF' : 'PJ' ;
+        $documento .= $usuario->documento;
+        $generoStr = $usuario->genero === Genero::feminino ? 'F' : 'M';
+        $aniversarioStr = $usuario->aniversario->format('yyyy-MM-dd hh:MM:ss');
+        $insert->bind_param("sssssss",
+            $usuario->nome,
+            $usuario->sobrenome,
+            $documento,
+            $generoStr,
+            $aniversarioStr,
+            $usuario->email,
+            $usuario->senha,
+        );
+        if(!$insert->execute()) {
+            unset($insert,$documento,$generoStr,$aniversarioStr);
+            throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL.");
+        }
+        $idNovoUsuario = $db->insert_id;
+        $usuarioRet = (new Usuario($idNovoUsuario))
+            ->setNome($usuario->nome)
+            ->setSobrenome($usuario->sobrenome)
+            ->setDocumento($usuario->documento)
+            ->setGenero($usuario->genero)
+            ->setSenhaDoDB($usuario->senha)
+            ->setAniversario($usuario->aniversario)
+            ->setEmail($usuario->email);
+        unset($insert);
+
+        foreach ($usuario->telefonesUsuario as $telUsuario){ //Adiciona cada telefone informado pelo usuário
+            $insert = $db->prepare('INSERT INTO Telefones_usuarios (id_usuario, descricao, ddd, telefone, whatsapp, telegram, wechat, sms, chamadas) VALUES (?,?,?,?,?,?,?,?,?)');
+            $desc = $telUsuario->getDescricao();
+            $ddd = $telUsuario->getDDD();
+            $tel = $telUsuario->getTelefone();
+            $wpp = $telUsuario->isWhatsApp();
+            $tgr = $telUsuario->isTelegram();
+            $wch = $telUsuario->isWeChat();
+            $sms = $telUsuario->isSMS();
+            $cham = $telUsuario->isChamadas();
+            // string, int, decimal, bool
+            $insert->bind_param("isisbbbbb",$idNovoUsuario,$desc,$ddd,$tel,$wpp,$tgr,$wch,$sms,$cham);
+            if(!$insert->execute()) {
+                $db->rollback();
+                unset($desc,$ddd,$tel,$wpp,$tgr,$wch,$sms,$cham,$insert,$documento,$generoStr,$usuario,$usuarioRet);
+                throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
+            }
+            $usuarioRet->setTelefonesUsuario(
+                (new TelefoneUsuario($db->insert_id))
+                    ->setDescricao($desc)
+                    ->setDDD($ddd)
+                    ->setTelefone($tel)
+                    ->setWhatsApp($wpp)
+                    ->setTelegram($tgr)
+                    ->setWeChat($wch)
+                    ->setSMS($sms)
+                    ->setChamadas($cham)
+            );
+            unset($desc,$ddd,$tel,$wpp,$tgr,$wch,$sms,$cham,$insert);
+        }
+        foreach ($usuario->enderecosUsuario as $endUsuarios){ //Adiciona cada endereço informado pelo usuário
+            $insert = $db->prepare('INSERT INTO Endereco_usuarios (id_usuario,descricao,finalidade,endereco,numero,complemento,bairro,cidade,estado,cep) VALUES (?,?,?,?,?,?,?,?,?,?)');
+            $desc = $endUsuarios->getDescricao();
+            $fin = $endUsuarios->getFinalidade();
+            $end = $endUsuarios->getEndereco();
+            $num = $endUsuarios->getNumero();
+            $comp = $endUsuarios->getComplemento();
+            $bai = $endUsuarios->getBairro();
+            $cid = $endUsuarios->getCidade();
+            $estd = $endUsuarios->getEstado();
+            $cep = $endUsuarios->getCep();
+            // string, int, decimal, bool
+            $insert->bind_param("isssisssss",$idNovoUsuario,$desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep);
+            if(!$insert->execute()) {
+                $db->rollback();
+                unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert,$documento,$generoStr,$usuario,$usuarioRet);
+                throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
+            }
+            $usuarioRet->setEnderecosUsuario(
+                (new EnderecoUsuario($db->insert_id))
+                    ->setDescricao($desc)
+                    ->setFinalidade($fin)
+                    ->setEndereco($end)
+                    ->setNumero($num)
+                    ->setComplemento($comp)
+                    ->setBairro($bai)
+                    ->setCidade($cid)
+                    ->setEstado($estd)
+                    ->setCep($cep)
+            );
+            unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert);
+        }
+
+        $db->commit();
+        unset($documento,$generoStr,$usuario);//Liberação de memória
+        $db->autocommit(true);
+        return $usuarioRet;
     }
 }
