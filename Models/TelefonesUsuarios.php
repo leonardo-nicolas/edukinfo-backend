@@ -7,8 +7,8 @@ use JetBrains\PhpStorm\ArrayShape;
 
 class TelefonesUsuarios implements Iterator
 {
-    private $posicaoAtualArray = 0;
-    private $arraysTelefone = [];
+    private int $posicaoAtualArray = 0, $totalItens = 0;
+    private array $arraysTelefone = [];
     /**
      * Obtém o elemento atual.
      * @link https://php.net/manual/en/iterator.current.php
@@ -56,19 +56,25 @@ class TelefonesUsuarios implements Iterator
     }
 
     public function add(TelefoneUsuario ...$telefoneUsuario): void {
-        $this->arraysTelefone[] = $telefoneUsuario;
+        foreach ($telefoneUsuario as $telUser) {
+            $this->arraysTelefone[] = $telUser;
+            ++$this->totalItens;
+        }
+    }
+
+    public function length(): int {
+        return $this->totalItens;
     }
 
     public function removeAt(int $posicao): void {
         array_splice($this->arraysTelefone,$posicao,1);
+        --$this->totalItens;
     }
 
     public function elementAt(int $posicao): ?TelefoneUsuario {
         foreach ($this->arraysTelefone as $indice => $val) {
-            foreach ((object)($val) as $val2) {
-                if($indice === $posicao) {
-                    return $val2;
-                }
+            if($indice === $posicao) {
+                return $val;
             }
         }
         return null;
@@ -76,11 +82,9 @@ class TelefonesUsuarios implements Iterator
 
     public function remove(TelefoneUsuario $elemento): bool {
         foreach ($this->arraysTelefone as $indice => $val) {
-            foreach ((object)($val) as $val2) {
-                if($val2 === $elemento) {
-                    $this->removeAt($indice);
-                    return true;
-                }
+            if($val === $elemento) {
+                $this->removeAt($indice);
+                return true;
             }
         }
         return false;
@@ -100,19 +104,17 @@ class TelefonesUsuarios implements Iterator
     public function toJsonArray(): array {
         $arrays = [];
         foreach ($this->arraysTelefone as $val) {
-            foreach ((object)($val) as $val2) {
-                $arrays[] = [
-                    "id" => $val2->getId() ?? -1,
-                    "descricao" => $val2->getDescricao(),
-                    "ddd" => $val2->getDDD(),
-                    "numero" => $val2->getTelefone(),
-                    "whatsApp" => $val2->isWhatsApp(),
-                    "telegram" => $val2->isTelegram(),
-                    "weChat" => $val2->isWeChat(),
-                    "chamadas" => $val2->isChamadas(),
-                    "sms" => $val2->isSMS()
-                ];
-            }
+            $arrays[] = [
+                "id" => $val->getId() ?? -1,
+                "descricao" => $val->getDescricao(),
+                "ddd" => $val->getDDD(),
+                "numero" => $val->getTelefone(),
+                "whatsApp" => $val->isWhatsApp(),
+                "telegram" => $val->isTelegram(),
+                "weChat" => $val->isWeChat(),
+                "chamadas" => $val->isChamadas(),
+                "sms" => $val->isSMS()
+            ];
         }
         return $arrays;
     }

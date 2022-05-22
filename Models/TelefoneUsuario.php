@@ -85,11 +85,11 @@ class TelefoneUsuario
         $tel = preg_replace("/\D/im","",$telefone);
         $lenTel = strlen($tel);
         if(!($lenTel >= 8 && $lenTel <= 9)){
-            throw new InvalidArgumentException("O telefone fixo DEVE ter 8 dígitos e o celular 9 dígitos!");
+            throw new InvalidArgumentException("O telefone fixo DEVE ter OBRIGATÓRIAMENTE 8 dígitos e o celular DEVE ter OBRIGATÓRIAMENTE 9 dígitos!");
+        }elseif($lenTel === 9 && !Validacao::Telefone($tel,true)){
+            throw new InvalidArgumentException("O telefone celular DEVE ter OBRIGATÓRIAMENTE 9 dígitos");
         }elseif($lenTel === 8 && !Validacao::Telefone($tel,false)){
             throw new InvalidArgumentException("O telefone fixo DEVE ter OBRIGATÓRIAMENTE 8 dígitos");
-        }elseif($lenTel === 9 && !Validacao::Telefone($tel,false)){
-            throw new InvalidArgumentException("O telefone fixo DEVE ter OBRIGATÓRIAMENTE 9 dígitos");
         }
         $this->telefone = $tel;
         return $this;

@@ -6,12 +6,11 @@ use InvalidArgumentException;
 use JetBrains\PhpStorm\Immutable;
 
 class FuncoesDiversas {
-    public static function devolverJsonErro(mixed $objErro,StatusCodes $statusCode, mixed &...$objParaGC): void {
+    public static function devolverJsonErro(mixed $objErro, mixed &...$objParaGC): never {
         if($objErro === null) {
             throw new InvalidArgumentException('$objErro NÃO PODE ser passado como NULL!');
         }
-        http_response_code($statusCode->value);
-        unset($statusCode,$objParaGC);
+        unset($objParaGC);
         exit(json_encode($objErro));
     }
 }

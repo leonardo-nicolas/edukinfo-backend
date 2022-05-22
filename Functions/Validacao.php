@@ -41,50 +41,35 @@ class Validacao {
     }
 
     public static function CNPJ(string $cnpj):bool {
-        $cnpj = preg_replace('/\D+/', '', $cnpj);
-        $invalidos = [
-            "00000000000000",
-            "11111111111111",
-            "22222222222222",
-            "33333333333333",
-            "44444444444444",
-            "55555555555555",
-            "66666666666666",
-            "77777777777777",
-            "88888888888888",
-            "99999999999999"
-        ];
-        // Elimina CNPJs invalidos conhecidos
-        if ($cnpj === '' || strlen($cnpj) !== 14 || in_array($cnpj,$invalidos,  true)) {
+        $cnpj = preg_replace('/\D+/', '', (string) $cnpj);
+        // Valida o tamanho ou Verifica se todos os digitos são iguais
+        if (strlen($cnpj) !== 14 || preg_match('/(\d)\1{13}/', $cnpj)) {
+            unset($cnpj);
             return false;
         }
 
-        // Valida DVs
-        $tamanho = strlen($cnpj) - 2;
-        $numeros = substr($cnpj, 0, $tamanho);
-        $digitos = substr($cnpj, $tamanho);
+        // Valida primeiro dígito verificador
         $soma = 0;
-        $pos = $tamanho - 7;
-        for ($indice = $tamanho; $indice >= 1; $indice--) {
-            $soma += intval(substr($numeros, $tamanho - $indice, 1)) * $pos--;
-            if ($pos < 2) {
-                $pos = 9;
-            }
+        for ($posicao = 0, $j = 5; $posicao < 12; ++$posicao) {
+            $soma += intval(substr($cnpj,$posicao,1)) * $j;
+            $j = ($j === 2) ? 9 : $j - 1;
         }
-        $resultado1 = $soma % 11 < 2 ? 0 : 11 - $soma % 11;
 
-        $tamanho += 1;
-        $soma *= 0;
-        $pos *= 0;
-        $pos += $tamanho - 7;
-        for ($indice = $tamanho; $indice >= 1; $indice--) {
-            $soma += intval(substr($numeros, $tamanho - $indice, 1)) * $pos--;
-            if ($pos < 2) {
-                $pos = 9;
-            }
+        $resto1 = $soma % 11;
+        $sucesso = [];
+        $sucesso[] = intval(substr($cnpj,12,1)) === ($resto1 < 2 ? 0 : 11 - $resto1);
+        unset($soma);
+
+        // Valida segundo dígito verificador
+        $soma=0;
+        for ($posicao = 0, $j = 6; $posicao < 13; ++$posicao) {
+            $soma += intval(substr($cnpj,$posicao,1)) * $j;
+            $j = ($j == 2) ? 9 : $j - 1;
         }
-        $resultado2 = $soma % 11 < 2 ? 0 : 11 - $soma % 11;
-        return $resultado2 === intval(substr($digitos, 1, 1)) && $resultado1 === intval(substr($digitos, 0, 1));
+        $resto2 = $soma % 11;
+        $sucesso[] = intval(substr($cnpj,13,1)) === ($resto2 < 2 ? 0 : 11 - $resto2);
+        unset($posicao,$resto1,$resto2,$soma,$cnpj,$j);
+        return $sucesso[0] && $sucesso[1];
     }
 
     public static function Email(string $email):bool{
@@ -93,9 +78,9 @@ class Validacao {
 
     public static function Telefone(string $numero, bool $isCelular): bool {
         if($isCelular){
-            return preg_match('/^([2-4]\d{3})-?\d{4}$/i',$numero);
-        } else {
             return preg_match('/^((9[6-9])\d{3})-?\d{4}$/',$numero);
+        } else {
+            return preg_match('/^([2-4]\d{3})-?\d{4}$/i',$numero);
         }
     }
 

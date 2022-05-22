@@ -6,6 +6,7 @@ use Bcrypt\Bcrypt;
 use DateTime;
 use DateTimeInterface;
 use EdukInfo\Exceptions\ArgumentoMuitoLongoException;
+use EdukInfo\Exceptions\RegistroDuplicadoException;
 use EdukInfo\Functions\FuncoesDiversas;
 use EdukInfo\Functions\StatusCodes;
 use EdukInfo\Functions\Validacao;
@@ -159,10 +160,12 @@ class Usuario
         } elseif($this->tipoCliente === TipoCliente::PessoaJuridica && $lenDoc !== 14) {
             throw new ArgumentoMuitoLongoException('$sobrenome (CNPJ)',14);
         }
-
-        if(str_contains(strtolower($documento),'pf') && Validacao::CPF($docNum)){
+        // str_contains(strtolower($documento),'pf')
+        if(strlen($docNum) === 11 && Validacao::CPF($docNum)){
             $this->tipoCliente = TipoCliente::PessoaFisica;
-        } elseif(str_contains(strtolower($documento),'pj') && Validacao::CNPJ($docNum)) {
+        }
+        // str_contains(strtolower($documento),'pj')
+        elseif(strlen($docNum) === 14 && Validacao::CNPJ($docNum)) {
             $this->tipoCliente = TipoCliente::PessoaJuridica;
         } else {
             throw new InvalidArgumentException('Não foi possível distinguir pessoa física de pessoa jurídica!');
@@ -290,30 +293,62 @@ class Usuario
         return $this->id;
     }
 
+    // O primeiro parâmetro do método'bind_param' (o $types), só aceita os seguintes argumentos:
+    // s -> String (para cadeia de caractéres longa)
+    // i -> Inteiro (para números inteiros)
+    // d -> Duplo (para números decimais por exemplo)
+    // b -> Booliano (para True ou False)
+
+    /**
+     * Obtém algum usuário, apenas informando o CPF ou CNPJ.
+     * @param string $documento Informe com 'PF' seguido do número do CPF ou 'PJ' seguido do número do CNPJ.
+     * @return Usuario|null O resultado pronto. Podendo trazer todas as informações do usuário...
+     * @throws ArgumentoMuitoLongoException Raro de acontecer, pois os dados já são cadastrados no banco de dados com todas as validações devidas...
+     */
+    public static function getUsuarioByDocumento(string $documento): ?Usuario {
+        /** @var mysqli $db */
+        $db = require("../db.php");
+        $buscaUsuario = $db->prepare("SELECT * FROM Usuarios WHERE documento = ?");
+        $documento = strtoupper($documento);
+        $buscaUsuario->bind_param("s",$documento);
+        return self::fillDadosAfterGet($buscaUsuario,$db);
+    }
+
+    /**
+     * Obtém algum usuário informando o ID desse usuário...
+     * @param int $id Informe o ID do usuário
+     * @return Usuario|null O resultado pronto. Podendo trazer todas as informações do usuário...
+     * @throws ArgumentoMuitoLongoException Raro de acontecer, pois os dados já são cadastrados no banco de dados com todas as validações devidas...
+     */
     public static function getUsuarioById(int $id):?Usuario{
         /** @var mysqli $db */
         $db = require("../db.php");
         $buscaUsuario = $db->prepare("SELECT * FROM Usuarios WHERE id = ?");
-        // O primeiro parâmetro do método'bind_param' (o $types), só aceita os seguintes argumentos:
-        // s -> String (para cadeia de caractéres longa)
-        // i -> Inteiro (para números inteiros)
-        // d -> Duplo (para números decimais por exemplo)
-        // b -> Booliano (para True ou False)
         $buscaUsuario->bind_param("s",$id);
         return self::fillDadosAfterGet($buscaUsuario,$db);
     }
+
+    /**
+     * Obtém algum usuário informando o e-mail.
+     * @param string $email Informe o email em que deseja obter o usuário.
+     * @return Usuario|null O resultado pronto. Podendo trazer todas as informações do usuário...
+     * @throws ArgumentoMuitoLongoException Raro de acontecer, pois os dados já são cadastrados no banco de dados com todas as validações devidas...
+     */
     public static function getUsuarioByEmail(string $email):?Usuario{
         /** @var mysqli $db */
         $db = require("../db.php");
         $buscaUsuario = $db->prepare("SELECT * FROM Usuarios WHERE email = ?");
-        // O primeiro parâmetro do método'bind_param' (o $types), só aceita os seguintes argumentos:
-        // s -> String (para cadeia de caractéres longa)
-        // i -> Inteiro (para números inteiros)
-        // d -> Duplo (para números decimais por exemplo)
-        // b -> Booliano (para True ou False)
         $buscaUsuario->bind_param("s",$email);
         return self::fillDadosAfterGet($buscaUsuario,$db);
     }
+
+    /**
+     * Método apenas para a auxiliação dos métodos `getUsuarioById`, `getUsuarioByEmail` e `getUsuarioByDocumento`.
+     * @param mysqli_stmt $buscaUsuario O objeto com a query preparada
+     * @param mysqli $db O objeto do banco de dados
+     * @return Usuario|null O resultado pronto. Podendo trazer todas as informações do usuário...
+     * @throws ArgumentoMuitoLongoException Raro de acontecer, pois os dados já são cadastrados no banco de dados com todas as validações devidas...
+     */
     private static function fillDadosAfterGet(mysqli_stmt &$buscaUsuario, mysqli &$db): ?Usuario{
         $buscaUsuario->execute();
         $resultadoBusca = $buscaUsuario->get_result();
@@ -365,15 +400,29 @@ class Usuario
         return $objUsuario;
     }
 
+    /**
+     * Realiza a inserção de um novo usuário, na tabela 'Usuarios' do banco de dados, assim como a inserção dos
+     * telefones e dos endereços, informado pelo usuário...
+     * @throws ArgumentoMuitoLongoException
+     * @throws RegistroDuplicadoException Ocorre quando já existe algum usuário cadastrado no banco de dados.
+     * @throws mysqli_sql_exception Ocorre com algum eventual erro do MySQL...
+     */
     public static function novoUsuario(Usuario $usuario): Usuario {
         /** @var mysqli $db */
+        $existencia = [
+            self::getUsuarioByEmail($usuario->email),
+            self::getUsuarioByDocumento(($usuario->tipoCliente === TipoCliente::PessoaFisica ? 'pf' : 'pj') . $usuario->documento)
+        ];
+        if(!in_array(null,$existencia)) {
+            throw new RegistroDuplicadoException($usuario->email);
+        }
         $db = require('../db.php');
         $db->autocommit(false);
         $insert = $db->prepare('INSERT INTO Usuarios(nome, sobrenome, documento, genero, aniversario, email, senha) VALUES (?,?,?,?,?,?,?)');
         $documento = $usuario->tipoCliente === TipoCliente::PessoaFisica ? 'PF' : 'PJ' ;
         $documento .= $usuario->documento;
         $generoStr = $usuario->genero === Genero::feminino ? 'F' : 'M';
-        $aniversarioStr = $usuario->aniversario->format('yyyy-MM-dd hh:MM:ss');
+        $aniversarioStr = $usuario->aniversario->format('Y\\-m\\-d');
         $insert->bind_param("sssssss",
             $usuario->nome,
             $usuario->sobrenome,
@@ -398,6 +447,39 @@ class Usuario
             ->setEmail($usuario->email);
         unset($insert);
 
+        foreach ($usuario->enderecosUsuario as $endUsuarios){ //Adiciona cada endereço informado pelo usuário
+            $insert = $db->prepare('INSERT INTO Endereco_usuarios (id_usuario,descricao,finalidade,endereco,numero,complemento,bairro,cidade,estado,cep) VALUES (?,?,?,?,?,?,?,?,?,?)');
+            $desc = $endUsuarios->getDescricao();
+            $fin = $endUsuarios->getFinalidade();
+            $end = $endUsuarios->getEndereco();
+            $num = $endUsuarios->getNumero();
+            $comp = $endUsuarios->getComplemento();
+            $bai = $endUsuarios->getBairro();
+            $cid = $endUsuarios->getCidade();
+            $objEstado = $endUsuarios->getEstado();
+            $estd = $objEstado->value;
+            $cep = $endUsuarios->getCep();
+            // string, int, decimal, bool
+            $insert->bind_param("isssisssss",$idNovoUsuario,$desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep);
+            if(!$insert->execute()) {
+                $db->rollback();
+                unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert,$documento,$generoStr,$usuario,$usuarioRet);
+                throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
+            }
+            $usuarioRet->setEnderecosUsuario(
+                (new EnderecoUsuario($db->insert_id))
+                    ->setDescricao($desc)
+                    ->setFinalidade($fin)
+                    ->setEndereco($end)
+                    ->setNumero($num)
+                    ->setComplemento($comp)
+                    ->setBairro($bai)
+                    ->setCidade($cid)
+                    ->setEstado($objEstado)
+                    ->setCep($cep)
+            );
+            unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert);
+        }
         foreach ($usuario->telefonesUsuario as $telUsuario){ //Adiciona cada telefone informado pelo usuário
             $insert = $db->prepare('INSERT INTO Telefones_usuarios (id_usuario, descricao, ddd, telefone, whatsapp, telegram, wechat, sms, chamadas) VALUES (?,?,?,?,?,?,?,?,?)');
             $desc = $telUsuario->getDescricao();
@@ -428,39 +510,6 @@ class Usuario
             );
             unset($desc,$ddd,$tel,$wpp,$tgr,$wch,$sms,$cham,$insert);
         }
-        foreach ($usuario->enderecosUsuario as $endUsuarios){ //Adiciona cada endereço informado pelo usuário
-            $insert = $db->prepare('INSERT INTO Endereco_usuarios (id_usuario,descricao,finalidade,endereco,numero,complemento,bairro,cidade,estado,cep) VALUES (?,?,?,?,?,?,?,?,?,?)');
-            $desc = $endUsuarios->getDescricao();
-            $fin = $endUsuarios->getFinalidade();
-            $end = $endUsuarios->getEndereco();
-            $num = $endUsuarios->getNumero();
-            $comp = $endUsuarios->getComplemento();
-            $bai = $endUsuarios->getBairro();
-            $cid = $endUsuarios->getCidade();
-            $estd = $endUsuarios->getEstado();
-            $cep = $endUsuarios->getCep();
-            // string, int, decimal, bool
-            $insert->bind_param("isssisssss",$idNovoUsuario,$desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep);
-            if(!$insert->execute()) {
-                $db->rollback();
-                unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert,$documento,$generoStr,$usuario,$usuarioRet);
-                throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
-            }
-            $usuarioRet->setEnderecosUsuario(
-                (new EnderecoUsuario($db->insert_id))
-                    ->setDescricao($desc)
-                    ->setFinalidade($fin)
-                    ->setEndereco($end)
-                    ->setNumero($num)
-                    ->setComplemento($comp)
-                    ->setBairro($bai)
-                    ->setCidade($cid)
-                    ->setEstado($estd)
-                    ->setCep($cep)
-            );
-            unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert);
-        }
-
         $db->commit();
         unset($documento,$generoStr,$usuario);//Liberação de memória
         $db->autocommit(true);

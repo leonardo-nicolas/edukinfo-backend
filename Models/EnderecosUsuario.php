@@ -2,12 +2,14 @@
 
 namespace EdukInfo\Models;
 
+use Iterator;
 use JetBrains\PhpStorm\ArrayShape;
 
-class EnderecosUsuario
+class EnderecosUsuario implements Iterator
 {
-    private $posicaoAtualArray = 0;
-    private $arraysEndereco = [];
+    private int $posicaoAtualArray = 0;
+    /** @var EnderecoUsuario[] */
+    private array $arraysEndereco = [];
     /**
      * Obtém o elemento atual.
      * @link https://php.net/manual/en/iterator.current.php
@@ -54,8 +56,10 @@ class EnderecosUsuario
         $this->posicaoAtualArray = 0;
     }
 
-    public function add(EnderecoUsuario ...$telefoneUsuario): void {
-        $this->arraysEndereco[] = $telefoneUsuario;
+    public function add(EnderecoUsuario ...$enderecosUsuario): void {
+        foreach ($enderecosUsuario as $endUsuario) {
+            $this->arraysEndereco[] = $endUsuario;
+        }
     }
 
     public function removeAt(int $posicao): void {
@@ -64,10 +68,8 @@ class EnderecosUsuario
 
     public function elementAt(int $posicao): ?EnderecoUsuario {
         foreach ($this->arraysEndereco as $indice => $val) {
-            foreach ((object)($val) as $val2) {
-                if($indice === $posicao) {
-                    return $val2;
-                }
+            if($indice === $posicao) {
+                return $val;
             }
         }
         return null;
@@ -75,11 +77,9 @@ class EnderecosUsuario
 
     public function remove(EnderecoUsuario $elemento): bool {
         foreach ($this->arraysEndereco as $indice => $val) {
-            foreach ((object)($val) as $val2) {
-                if($val2 === $elemento) {
-                    $this->removeAt($indice);
-                    return true;
-                }
+            if($elemento === $val) {
+                $this->removeAt($indice);
+                return true;
             }
         }
         return false;
@@ -100,28 +100,23 @@ class EnderecosUsuario
     public function toJsonArray(): array {
         $arrays = [];
         foreach ($this->arraysEndereco as $val) {
-            foreach ((object)($val) as $val2) {
-                $arrays[] = [
-                    "id" => $val2->getId(),
-                    "descricao" => $val2->getDescricao(),
-                    "finalidade" => $val2->getFinalidade(),
-                    "endereco" => $val2->getEndereco(),
-                    "numero" => $val2->getNumero(),
-                    "complemento" => $val2->getComplemento(),
-                    "bairro" => $val2->getBairro(),
-                    "cidade" => $val2->getCidade(),
-                    "estado" => $val2->getEstado()->value,
-                    "cep" => $val2->getCep()
-                ];
-            }
+            $arrays[] = [
+                "id" => $val->getId(),
+                "descricao" => $val->getDescricao(),
+                "finalidade" => $val->getFinalidade(),
+                "endereco" => $val->getEndereco(),
+                "numero" => $val->getNumero(),
+                "complemento" => $val->getComplemento(),
+                "bairro" => $val->getBairro(),
+                "cidade" => $val->getCidade(),
+                "estado" => $val->getEstado()->value,
+                "cep" => $val->getCep()
+            ];
         }
         return $arrays;
     }
     function __destruct() {
         foreach ($this->arraysEndereco as $val) {
-            foreach ((object)($val) as $val2) {
-                unset($val2);
-            }
             unset($val);
         }
         unset(

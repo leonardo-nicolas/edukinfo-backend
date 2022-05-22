@@ -3,6 +3,7 @@
         "polarising/bcrypt": "^1.0",
         "ext-mysqli": "*",
         "phpmailer/phpmailer": "^6.6",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "firebase/php-jwt": "^6.2"
     }
 }
