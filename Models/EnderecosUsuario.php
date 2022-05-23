@@ -8,6 +8,7 @@ use JetBrains\PhpStorm\ArrayShape;
 class EnderecosUsuario implements Iterator
 {
     private int $posicaoAtualArray = 0;
+    private int $totalItens = 0;
     /** @var EnderecoUsuario[] */
     private array $arraysEndereco = [];
     /**
@@ -59,6 +60,7 @@ class EnderecosUsuario implements Iterator
     public function add(EnderecoUsuario ...$enderecosUsuario): void {
         foreach ($enderecosUsuario as $endUsuario) {
             $this->arraysEndereco[] = $endUsuario;
+            ++$this->totalItens;
         }
     }
 
@@ -108,7 +110,7 @@ class EnderecosUsuario implements Iterator
                 "numero" => $val->getNumero(),
                 "complemento" => $val->getComplemento(),
                 "bairro" => $val->getBairro(),
-                "cidade" => $val->getCidade(),
+                "municipio" => $val->getCidade(),
                 "estado" => $val->getEstado()->value,
                 "cep" => $val->getCep()
             ];
@@ -116,8 +118,8 @@ class EnderecosUsuario implements Iterator
         return $arrays;
     }
     function __destruct() {
-        foreach ($this->arraysEndereco as $val) {
-            unset($val);
+        for($i = 0; $i < $this->totalItens; ++$i){
+            unset($this->arraysEndereco[$i]);
         }
         unset(
             $this->arraysEndereco,

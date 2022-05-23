@@ -4,20 +4,9 @@ namespace EdukInfo\Functions;
 class Validacao {
     public static function CPF(string $cpf):bool {
         $cpf = preg_replace('/\D+/', '', $cpf);
-        $invalidos = [
-            "00000000000",
-            "11111111111",
-            "22222222222",
-            "33333333333",
-            "44444444444",
-            "55555555555",
-            "66666666666",
-            "77777777777",
-            "88888888888",
-            "99999999999"
-        ];
-        // Elimina CPFs inválidos conhecidos
-        if ($cpf === '' || in_array($cpf,$invalidos,  true)) {
+        // Valida o tamanho ou Verifica se todos os digitos são iguais
+        if (strlen($cpf) !== 11 || preg_match('/(\d)\1{11}/', $cpf)) {
+            unset($cpf);
             return false;
         }
         $soma = 0;
@@ -62,13 +51,13 @@ class Validacao {
 
         // Valida segundo dígito verificador
         $soma=0;
-        for ($posicao = 0, $j = 6; $posicao < 13; ++$posicao) {
-            $soma += intval(substr($cnpj,$posicao,1)) * $j;
-            $j = ($j == 2) ? 9 : $j - 1;
+        for ($posicao = 0, $l = 6; $posicao < 13; ++$posicao) {
+            $soma += intval(substr($cnpj,$posicao,1)) * $l;
+            $l = ($l == 2) ? 9 : $l - 1;
         }
         $resto2 = $soma % 11;
         $sucesso[] = intval(substr($cnpj,13,1)) === ($resto2 < 2 ? 0 : 11 - $resto2);
-        unset($posicao,$resto1,$resto2,$soma,$cnpj,$j);
+        unset($posicao,$resto1,$resto2,$soma,$cnpj,$j,$l);
         return $sucesso[0] && $sucesso[1];
     }
 

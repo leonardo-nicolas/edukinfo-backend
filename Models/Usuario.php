@@ -61,32 +61,65 @@ class Usuario
         return  $this;
     }
 
+
     #[ArrayShape([
-        "id" => "int",
-        "nome" => "string",
-        "sobrenome" => "string",
-        "documento" => "string",
-        "email" => "string",
-        "tipoDeCliente" => "string",
-        "genero" => "string",
-        "aniversario" => "date",
-        "telefones" => "array",
-        "enderecos" => "array"
+        "usuario" => [
+            "id"=>"int",
+            "nome"=>"string",
+            "sobrenome"=>"string",
+            "documento"=>[
+                "numero"=>"string",
+                "tipo"=>"string"
+            ],
+            "email"=>"string",
+            "genero"=>"string",
+            "aniversario"=>"string"
+        ],
+        "telefones" => [[
+            "id" => "int",
+            "descricao" => "string",
+            "codigoArea" => "int",
+            "numero" => "string",
+            "appsMensageiros" => [
+                "whatsApp" => "bool",
+                "telegram" => "bool",
+                "weChat" => "bool",
+                "mensagemTexto" => "bool"
+            ],
+            "chamadas" => "bool"
+        ]],
+        "enderecos" => [[
+            "id" => "int",
+            "descricao" => "string",
+            "finalidade" => "string",
+            "endereco" => "string",
+            "numero" => "int",
+            "complemento" => "string",
+            "bairro" => "string",
+            "cidade" => "string",
+            "estado" => "string",
+            "cep" => "string"
+        ]]
     ])]
     public function toJsonArray(): array {
         $tipoCli = $this->tipoCliente === TipoCliente::PessoaFisica ? 'PF' : 'PJ';
         return [
-          "id"=>$this->id ?? -1,
-          "nome"=>$this->nome,
-          "sobrenome"=>$this->sobrenome,
-          "documento"=>$this->documento,
-          "email"=>$this->email,
-          "tipoDeCliente"=>$tipoCli,
-          "genero"=>strtoupper(substr($this->genero->name,0,1)),
-          "aniversario"=>$this->aniversario->format(DateTimeInterface::ATOM),
+          "usuario" => [
+              "id"=>$this->id ?? -1,
+              "nome"=>$this->nome,
+              "sobrenome"=>$this->sobrenome,
+              "documento"=>[
+                  "numero"=>$this->documento,
+                  "tipo"=>$tipoCli,
+              ],
+              "email"=>$this->email,
+              "genero"=>strtoupper(substr($this->genero->name,0,1)),
+              "aniversario"=>$this->aniversario->format(DateTimeInterface::ATOM)
+          ],
           "telefones"=>$this->telefonesUsuario->toJsonArray(),
           "enderecos"=>$this->enderecosUsuario->toJsonArray()
         ];
+
     }
 
     /**

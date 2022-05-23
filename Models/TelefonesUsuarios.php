@@ -8,6 +8,7 @@ use JetBrains\PhpStorm\ArrayShape;
 class TelefonesUsuarios implements Iterator
 {
     private int $posicaoAtualArray = 0, $totalItens = 0;
+    /** @var TelefoneUsuario[] $arraysTelefone */
     private array $arraysTelefone = [];
     /**
      * Obtém o elemento atual.
@@ -93,13 +94,15 @@ class TelefonesUsuarios implements Iterator
     #[ArrayShape([[
         "id" => "int",
         "descricao" => "string",
-        "ddd" => "int",
+        "codigoArea" => "int",
         "numero" => "string",
-        "whatsapp" => "bool",
-        "telegram" => "bool",
-        "wechat" => "bool",
-        "chamadas" => "bool",
-        "sms" => "bool"
+        "appsMensageiros" => [
+            "whatsApp" => "bool",
+            "telegram" => "bool",
+            "weChat" => "bool",
+            "mensagemTexto" => "bool"
+        ],
+        "chamadas" => "bool"
     ]])]
     public function toJsonArray(): array {
         $arrays = [];
@@ -107,28 +110,28 @@ class TelefonesUsuarios implements Iterator
             $arrays[] = [
                 "id" => $val->getId() ?? -1,
                 "descricao" => $val->getDescricao(),
-                "ddd" => $val->getDDD(),
+                "codigoArea" => $val->getDDD(),
                 "numero" => $val->getTelefone(),
-                "whatsApp" => $val->isWhatsApp(),
-                "telegram" => $val->isTelegram(),
-                "weChat" => $val->isWeChat(),
+                "appsMensageiros" => [
+                    "whatsApp" => $val->isWhatsApp(),
+                    "telegram" => $val->isTelegram(),
+                    "weChat" => $val->isWeChat(),
+                    "mensagemTexto" => $val->isSMS()
+                ],
                 "chamadas" => $val->isChamadas(),
-                "sms" => $val->isSMS()
             ];
         }
         return $arrays;
     }
 
     public function __destruct() {
-        foreach ($this->arraysTelefone as $val) {
-            foreach ((object)($val) as $val2) {
-                unset($val2);
-            }
-            unset($val);
+        for($i = 0; $i < $this->totalItens; ++$i){
+            unset($this->arraysTelefone[$i]);
         }
         unset(
           $this->arraysTelefone,
-          $this->posicaoAtualArray
+          $this->posicaoAtualArray,
+          $i
         );
     }
 }

@@ -2,7 +2,6 @@
 
 namespace EdukInfo\Exceptions;
 use Exception;
-use JetBrains\PhpStorm\Internal\LanguageLevelTypeAware;
 use Throwable;
 
 class ArgumentoMuitoLongoException extends Exception {

@@ -3,7 +3,6 @@
 namespace EdukInfo\Functions;
 
 use InvalidArgumentException;
-use JetBrains\PhpStorm\Immutable;
 
 class FuncoesDiversas {
     public static function devolverJsonErro(mixed $objErro, mixed &...$objParaGC): never {
