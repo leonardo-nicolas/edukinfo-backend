@@ -40,7 +40,11 @@ if($objUsuario === null) {
         "mensagem" => "Desculpe " . $objUsuario->getNome() . ", mas sua senha está inválida!"
     ], $statusCode, $resultado, $objUsuario, $buscaUsuario, $input, $statusCode);
 } else {
-    $duracao = new DateInterval("P7D");
+    if(isset($_POST['validade'])) {
+        $duracao = new DateInterval("P" . strtoupper($_POST["validade"]));
+    } else {
+        $duracao = new DateInterval("P7D");
+    }
     $mais7dias = (new DateTime())->add($duracao);
     $validade = $mais7dias->format(DateTimeInterface::W3C);
     $jwt = JWT::encode([

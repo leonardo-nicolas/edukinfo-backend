@@ -7,7 +7,7 @@ use EdukInfo\Exceptions\ArgumentoMuitoLongoException;
 use EdukInfo\Exceptions\RegistroDuplicadoException;
 use EdukInfo\Functions\FuncoesDiversas;
 use EdukInfo\Functions\StatusCodes;
-use EdukInfo\Models\EnderecoUsuario;
+use EdukInfo\Models\Endereco;
 use EdukInfo\Models\Estado;
 use EdukInfo\Models\Genero;
 use EdukInfo\Models\TelefoneUsuario;
@@ -77,7 +77,7 @@ try {
     if(!isset($input->addresses)) { throw new InvalidArgumentException("Era esperado o objeto 'addresses'."); }
     foreach ($input?->addresses as $addr) {
         $objUsuario->setEnderecosUsuario(
-            (new EnderecoUsuario())
+            (new Endereco())
                 ->setCep($addr?->zipCode)
                 ->setEndereco($addr?->address)
                 ->setBairro($addr?->neighbor)
@@ -116,16 +116,18 @@ try {
     ],$ex,$classeErro);
 }
 $hoje = new DateTime();
-$duracao = new DateInterval("P7D");
+$duracao = new DateInterval("P6H");
 $mais7dias = $hoje->add($duracao);
 $validade = $mais7dias->format(DateTimeInterface::W3C);
+
 $jwt = JWT::encode([
     "idUsuario"=>$objUsuario->getId() ?? -1,
     "validade"=>$validade
 ],'chave_tosca','HS256');
 $resultado = [
     "jwt" => $jwt,
-    "validade" => str_replace('-03:00','',$validade)
+    "validade" => str_replace('-03:00','',$validade),
+    "usuario" => $objUsuario->toJsonArray()
 ];
 
 echo json_encode($resultado);

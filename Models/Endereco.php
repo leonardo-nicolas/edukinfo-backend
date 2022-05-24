@@ -6,7 +6,7 @@ use EdukInfo\Exceptions\ArgumentoMuitoLongoException;
 use EdukInfo\Functions\Validacao;
 use InvalidArgumentException;
 
-class EnderecoUsuario
+class Endereco
 {
     private string
         $descricao="",
@@ -15,7 +15,7 @@ class EnderecoUsuario
         $bairro="",
         $cidade="",
         $cep="";
-    private ?string $complemento=null;
+    private ?string $complemento = null;
     private Estado $estado = Estado::desconhecido;
     private ?int $numero = null;
     public function __construct(
@@ -38,10 +38,10 @@ class EnderecoUsuario
     /**
      * Define a descrição do endereço
      * @param string $descricao
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$descricao* foi passado com mais de 50 caractéres.
      */
-    public function setDescricao(string $descricao): EnderecoUsuario {
+    public function setDescricao(string $descricao): Endereco {
         if(strlen($descricao) > 50){
             throw new ArgumentoMuitoLongoException('$descricao',50);
         }
@@ -60,10 +60,10 @@ class EnderecoUsuario
     /**
      * Define a finalidade deste endereço (Como por exemplo, "cobrança")
      * @param string $finalidade
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Acontece quando o argumento `$finalidade` passa de 20 caractéres.
      */
-    public function setFinalidade(string $finalidade): EnderecoUsuario {
+    public function setFinalidade(string $finalidade): Endereco {
         if(strlen($finalidade) > 20){
             throw new ArgumentoMuitoLongoException('$finalidade',20);
         }
@@ -82,10 +82,10 @@ class EnderecoUsuario
     /**
      * Define o endereço
      * @param string $endereco
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$endereco* foi passado com mais de 200 caractéres.
      */
-    public function setEndereco(string $endereco): EnderecoUsuario {
+    public function setEndereco(string $endereco): Endereco {
         if(strlen($endereco) > 200){
             throw new ArgumentoMuitoLongoException('$endereco',200);
         }
@@ -104,10 +104,10 @@ class EnderecoUsuario
     /**
      * Define o complemento
      * @param string $complemento
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$complemento* foi passado com mais de 60 caractéres.
      */
-    public function setComplemento(string $complemento): EnderecoUsuario {
+    public function setComplemento(string $complemento): Endereco {
         if(strlen($complemento) > 60){
             throw new ArgumentoMuitoLongoException('$complemento',60);
         }
@@ -126,10 +126,10 @@ class EnderecoUsuario
     /**
      * Define o bairro
      * @param string $bairro
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$bairro* foi passado com mais de 50 caractéres.
      */
-    public function setBairro(string $bairro): EnderecoUsuario {
+    public function setBairro(string $bairro): Endereco {
         if(strlen($bairro) > 50){
             throw new ArgumentoMuitoLongoException('$bairro',50);
         }
@@ -148,10 +148,10 @@ class EnderecoUsuario
     /**
      * Define a cidade
      * @param string $cidade
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$cidade* foi passado com mais de 50 caractéres.
      */
-    public function setCidade(string $cidade): EnderecoUsuario {
+    public function setCidade(string $cidade): Endereco {
         if(strlen($cidade) > 50){
             throw new ArgumentoMuitoLongoException('$cidade',50);
         }
@@ -170,11 +170,11 @@ class EnderecoUsuario
     /**
      * Define o CEP
      * @param string $cep
-     * @return EnderecoUsuario
+     * @return Endereco
      * @throws ArgumentoMuitoLongoException Ocorre quando *$cep* foi passado com mais de 10 caractéres.
      * @throws InvalidArgumentException Ocorre quando o CEP é inválido
      */
-    public function setCep(string $cep): EnderecoUsuario {
+    public function setCep(string $cep): Endereco {
         if(strlen($cep) > 10){
             throw new ArgumentoMuitoLongoException('$cep',10);
         }
@@ -196,9 +196,9 @@ class EnderecoUsuario
     /**
      * Define o estado
      * @param Estado $estado
-     * @return EnderecoUsuario
+     * @return Endereco
      */
-    public function setEstado(Estado $estado): EnderecoUsuario {
+    public function setEstado(Estado $estado): Endereco {
         $this->estado = $estado;
         return $this;
     }
@@ -222,9 +222,9 @@ class EnderecoUsuario
     /**
      * Define o número da casa/empresa localizada no endereço, definido pelo usuário, caso se aplique.
      * @param int $numero
-     * @return EnderecoUsuario
+     * @return Endereco
      */
-    public function setNumero(int $numero): EnderecoUsuario {
+    public function setNumero(int $numero): Endereco {
         $this->numero = $numero;
         return $this;
     }

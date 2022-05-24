@@ -32,7 +32,7 @@ class Usuario
     private Genero $genero;
     private DateTime $aniversario;
     private TelefonesUsuarios $telefonesUsuario;
-    private EnderecosUsuario $enderecosUsuario;
+    private Enderecos $enderecosUsuario;
 
     public function __construct(
         private ?int $id = null
@@ -40,7 +40,7 @@ class Usuario
         $this->tipoCliente = TipoCliente::PessoaFisica;
         $this->genero = Genero::outros;
         $this->telefonesUsuario = new TelefonesUsuarios();
-        $this->enderecosUsuario = new EnderecosUsuario();
+        $this->enderecosUsuario = new Enderecos();
     }
 
     public function getTelefonesUsuario(): TelefonesUsuarios {
@@ -54,7 +54,7 @@ class Usuario
         return  $this;
     }
 
-    public function setEnderecosUsuario(EnderecoUsuario ...$telefones): Usuario{
+    public function setEnderecosUsuario(Endereco ...$telefones): Usuario{
         foreach($telefones as $tel) {
             $this->enderecosUsuario->add($tel);
         }
@@ -401,7 +401,7 @@ class Usuario
         $resultadoEnderecos = $buscaEndereco->get_result();
         while($linhasEnd = $resultadoEnderecos->fetch_assoc()){
             $objUsuario->setEnderecosUsuario(
-                (new EnderecoUsuario(intval($linhasEnd['id'])))
+                (new Endereco(intval($linhasEnd['id'])))
                     ->setDescricao((string)$linhasEnd['descricao'])
                     ->setFinalidade((string)$linhasEnd['finalidade'])
                     ->setEndereco((string)$linhasEnd['endereco'])
@@ -500,7 +500,7 @@ class Usuario
                 throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
             }
             $usuarioRet->setEnderecosUsuario(
-                (new EnderecoUsuario($db->insert_id))
+                (new Endereco($db->insert_id))
                     ->setDescricao($desc)
                     ->setFinalidade($fin)
                     ->setEndereco($end)

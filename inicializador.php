@@ -1,7 +1,8 @@
 <?php
 namespace EdukInfo;
-
 require_once (__DIR__ . '/vendor/autoload.php');
+
+use Directory;
 
 $dirs = [
     'Functions',
@@ -12,9 +13,10 @@ $dirs = [
 
 foreach ($dirs as $dir) {
     if(file_exists(__DIR__ . '/' . $dir . '/')) {
-        $ojDir = dir(__DIR__ . '/' . $dir);
-        while ($arquivo = $ojDir->read()) {
-            if (!is_dir($arquivo) && preg_match('/.*.php/', $arquivo)) {
+        /** @var Directory $objDir */
+        $objDir = dir(__DIR__ . '/' . $dir);
+        while ($arquivo = $objDir->read()) {
+            if (!is_dir($arquivo) && preg_match('/.*.php/i', $arquivo)) {
                 require_once(__DIR__ . "/" . $dir . "/" . $arquivo);
             }
         }

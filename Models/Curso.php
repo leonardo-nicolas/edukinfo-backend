@@ -4,6 +4,7 @@ namespace EdukInfo\Models;
 
 use JetBrains\PhpStorm\ArrayShape;
 use mysqli;
+use mysqli_stmt;
 
 class Curso
 {
@@ -19,8 +20,6 @@ class Curso
         public array $gradesCurso = [],
         public readonly bool $descontinuado = false
     ){ }
-
-
 
     #[ArrayShape([
         "id" => "int",
@@ -49,31 +48,48 @@ class Curso
 
     /** @return Curso[] */
     public static function getTodosCursos():array{
-        return self::getAllCursos(null);
+        /** @var mysqli $db */
+        $db = require(__DIR__ . '/../db.php');
+        $buscaCursos = $db->prepare("SELECT * FROM Cursos WHERE descontinuado = false");
+        return self::getAllCursos($db,$buscaCursos);
+    }
+
+    /** @return Curso[] */
+    public static function buscarCursosDisponiveis(string $strval):array {
+        /** @var mysqli $db */
+        $db = require(__DIR__ . '/../db.php');
+        $buscaCursos = $db->prepare("SELECT * FROM Cursos WHERE nome LIKE CONCAT('%',?,'%') OR descricao LIKE CONCAT('%',?,'%')");
+        $buscaCursos->bind_param("ss",$strval,$strval);
+        return self::getAllCursos($db,$buscaCursos);
     }
 
     public static function getCursoById(int $id): ?Curso{
-        $curso = self::getAllCursos($id);
+        /** @var mysqli $db */
+        $db = require(__DIR__ . '/../db.php');
+        $buscaCursos = $db->prepare("SELECT * FROM Cursos WHERE id = ?");
+        $buscaCursos->bind_param("i",$id);
+        $curso = self::getAllCursos($db,$buscaCursos);
         return $curso !== null ? $curso[0] : null;
     }
 
-    private static function getAllCursos(?int $id):?array {
-        /** @var Curso[] $cursos */
-        $cursos = [];
+    /** @return Curso[] */
+    public static function getCursosAleatorios(?int $limit = null):array {
         /** @var mysqli $db */
         $db = require(__DIR__ . '/../db.php');
-
-        $buscaCursos = $db->prepare(
-            $id === null ? "SELECT * FROM Cursos" : "SELECT * FROM Cursos WHERE id = ?"
-        );
-        if($id !== null){
-            $buscaCursos->bind_param("i",$id);
-        }
+        $buscaCursos = $db->prepare("SELECT * FROM Cursos ORDER BY RAND() LIMIT ?");
+        $limit = $limit ?? 1;
+        $buscaCursos->bind_param("i",$limit);
+        return self::getAllCursos($db,$buscaCursos);
+    }
+    
+    private static function getAllCursos(mysqli &$db, mysqli_stmt &$buscaCursos):?array {
         $buscaCursos->execute();
         $cursosObtidosDoDB = $buscaCursos->get_result();
         if($cursosObtidosDoDB->num_rows === 0) {
-            return null;
+            return [];
         }
+        /** @var Curso[] $cursos */
+        $cursos = [];
         while($linhaCurso = $cursosObtidosDoDB->fetch_assoc()){
             $buscaImagensCurso = $db->prepare("SELECT i.url, i.descricao,i.texto_alternativo_img FROM Imagens_slide_curso i INNER JOIN Cursos c ON i.id_curso = c.id WHERE c.id =  ?");
             $buscaImagensCurso->bind_param("i",$linhaCurso["id"]);

@@ -2,6 +2,8 @@
 
 namespace EdukInfo\Models;
 
+use EdukInfo\Functions\FuncoesDiversas;
+
 enum Estado:string
 {
     case desconhecido = "";
@@ -33,19 +35,7 @@ enum Estado:string
     case Goias = "GO";
     case DistritoFederal = "DF";
     public static function parse(string $estado): Estado {
-        $arrAcentos[] = '/(á|à|ã|â|ä)/';
-        $arrAcentos[] = '/(Á|À|Ã|Â|Ä)/';
-        $arrAcentos[] = '/(é|è|ê|ë)/';
-        $arrAcentos[] = '/(É|È|Ê|Ë)/';
-        $arrAcentos[] = '/(í|ì|î|ï)/';
-        $arrAcentos[] = '/(Í|Ì|Î|Ï)/';
-        $arrAcentos[] = '/(ó|ò|õ|ô|ö)/';
-        $arrAcentos[] = '/(Ó|Ò|Õ|Ô|Ö)/';
-        $arrAcentos[] = '/(ú|ù|û|ü)/';
-        $arrAcentos[] = '/(Ú|Ù|Û|Ü)/';
-        $arrAcentos[] = '/(ñ)/';
-        $arrAcentos[] = '/(Ñ)/';
-        $estado = preg_replace($arrAcentos,explode(" ","a A e E i I o O u U n N"),$estado);
+        $estado = FuncoesDiversas::removerAcentos($estado);
         $estados = self::cases();
         $estado = self::some_case_to_normal_case($estado);
         $estado = str_replace(' ','',$estado);

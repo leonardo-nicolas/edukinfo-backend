@@ -5,18 +5,18 @@ namespace EdukInfo\Models;
 use Iterator;
 use JetBrains\PhpStorm\ArrayShape;
 
-class EnderecosUsuario implements Iterator
+class Enderecos implements Iterator
 {
     private int $posicaoAtualArray = 0;
     private int $totalItens = 0;
-    /** @var EnderecoUsuario[] */
+    /** @var Endereco[] */
     private array $arraysEndereco = [];
     /**
      * Obtém o elemento atual.
      * @link https://php.net/manual/en/iterator.current.php
-     * @return EnderecoUsuario Can return any type.
+     * @return Endereco Can return any type.
      */
-    public function current(): EnderecoUsuario {
+    public function current(): Endereco {
         return $this->arraysEndereco[$this->posicaoAtualArray];
     }
 
@@ -57,7 +57,7 @@ class EnderecosUsuario implements Iterator
         $this->posicaoAtualArray = 0;
     }
 
-    public function add(EnderecoUsuario ...$enderecosUsuario): void {
+    public function add(Endereco ...$enderecosUsuario): void {
         foreach ($enderecosUsuario as $endUsuario) {
             $this->arraysEndereco[] = $endUsuario;
             ++$this->totalItens;
@@ -68,7 +68,7 @@ class EnderecosUsuario implements Iterator
         array_splice($this->arraysEndereco,$posicao,1);
     }
 
-    public function elementAt(int $posicao): ?EnderecoUsuario {
+    public function elementAt(int $posicao): ?Endereco {
         foreach ($this->arraysEndereco as $indice => $val) {
             if($indice === $posicao) {
                 return $val;
@@ -77,7 +77,7 @@ class EnderecosUsuario implements Iterator
         return null;
     }
 
-    public function remove(EnderecoUsuario $elemento): bool {
+    public function remove(Endereco $elemento): bool {
         foreach ($this->arraysEndereco as $indice => $val) {
             if($elemento === $val) {
                 $this->removeAt($indice);
