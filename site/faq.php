@@ -1,7 +1,7 @@
 <?php
 namespace EdukInfo;
 use mysqli;
-
+require_once(__DIR__ . '/../inicializador.php');
 /** @var mysqli $db */
 $db = require(__DIR__ . '/../db.php');
 $faqDB = $db->prepare("SELECT * FROM faq ORDER BY RAND()");
