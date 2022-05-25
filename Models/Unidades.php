@@ -16,12 +16,13 @@ class Unidades extends Enderecos {
         "bairro" => "string",
         "municipio" => "string",
         "estado" => "string",
-        "complement" => "string",
+        "complemento" => "string",
         "descricao" => "string"
     ]])]
     public function toJsonArray(): array
     {
         $arrays = [];
+        /** @var Unidade $val */
         foreach ($this as $val) {
             $arrays[] = [
                 "cep" => $val->getCep(),
@@ -30,8 +31,9 @@ class Unidades extends Enderecos {
                 "bairro" => $val->getBairro(),
                 "municipio" => $val->getCidade(),
                 "estado" => $val->getEstado()->value,
-                "complement" => $val->getComplemento(),
-                "descricao" => $val->getDescricao()
+                "complemento" => $val->getComplemento(),
+                "descricao" => $val->getDescricao(),
+                "fotos" => $val->imagensSlide->toJsonArray()
             ];
         }
         return $arrays;
@@ -45,17 +47,31 @@ class Unidades extends Enderecos {
         $unidadeResultado = $unidadeDB->get_result();
         $retorno = new Unidades();
         while($unidadeLn = $unidadeResultado->fetch_assoc()){
-            $retorno->add(
-                (new Endereco())
-                    ->setCep(strval($unidadeLn["cep"]))
-                    ->setEndereco(strval($unidadeLn["endereco"]))
-                    ->setNumero(intval($unidadeLn["numero"]))
-                    ->setBairro(strval($unidadeLn["bairro"]))
-                    ->setCidade(strval($unidadeLn["municipio"]))
-                    ->setEstado(Estado::parse($unidadeLn["descricao"]))
-                    ->setComplemento(strval($unidadeLn["complemento"]))
-                    ->setDescricao(strval($unidadeLn["descricao"]))
-            );
+            $unidade = new Unidade();
+            $unidade->setCep(strval($unidadeLn["cep"]));
+            $unidade->setEndereco(strval($unidadeLn["endereco"]));
+            $unidade->setNumero(intval($unidadeLn["numero"]));
+            $unidade->setBairro(strval($unidadeLn["bairro"]));
+            $unidade->setCidade(strval($unidadeLn["municipio"]));
+            $unidade->setEstado(Estado::parse($unidadeLn["descricao"]));
+            $unidade->setComplemento(strval($unidadeLn["complemento"]));
+            $unidade->setDescricao(strval($unidadeLn["descricao"]));
+
+            $fotoInteriorUnidade = $db->prepare("SELECT * FROM Fotos_unidade_interior WHERE id_unidade = ? ORDER BY RAND()");
+            $fotoInteriorUnidade->bind_param("i", $unidadeLn['id']);
+            $fotoInteriorUnidade->execute();
+            $fotoInteriorUnidadeResultado = $fotoInteriorUnidade->get_result();
+
+            while ($fotoInteriorUnidadeLn = $fotoInteriorUnidadeResultado->fetch_assoc()) {
+                $unidade->imagensSlide->add(
+                    new ImagemSlideCurso(
+                        strval($fotoInteriorUnidadeLn["image_url"]),
+                        strval($fotoInteriorUnidadeLn["image_txt"]),
+                        strval($fotoInteriorUnidadeLn["descricao_curta"])
+                    )
+                );
+            }
+            $retorno->add($unidade);
         }
         return $retorno;
     }

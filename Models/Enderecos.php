@@ -88,7 +88,7 @@ class Enderecos implements Iterator
     }
 
     #[ArrayShape([[
-        "id" => "int",
+        "id" => "int|null",
         "descricao" => "string",
         "finalidade" => "string",
         "endereco" => "string",

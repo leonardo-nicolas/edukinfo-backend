@@ -61,6 +61,9 @@ class Usuario
         return  $this;
     }
 
+    public function getTipoCliente():TipoCliente{
+        return $this->tipoCliente;
+    }
 
     #[ArrayShape([
         "usuario" => [
@@ -76,7 +79,7 @@ class Usuario
             "aniversario"=>"string"
         ],
         "telefones" => [[
-            "id" => "int",
+            "id" => "int|null",
             "descricao" => "string",
             "codigoArea" => "int",
             "numero" => "string",
@@ -89,7 +92,7 @@ class Usuario
             "chamadas" => "bool"
         ]],
         "enderecos" => [[
-            "id" => "int",
+            "id" => "int|null",
             "descricao" => "string",
             "finalidade" => "string",
             "endereco" => "string",
@@ -105,7 +108,7 @@ class Usuario
         $tipoCli = $this->tipoCliente === TipoCliente::PessoaFisica ? 'PF' : 'PJ';
         return [
           "usuario" => [
-              "id"=>$this->id ?? -1,
+              "id"=>$this->id,
               "nome"=>$this->nome,
               "sobrenome"=>$this->sobrenome,
               "documento"=>[

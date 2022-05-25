@@ -24,7 +24,8 @@ class Endereco
         //Aqui não existe regra de negócios! Pois, é apenas para
         //declarações feitas direto no construtor.
         //Estes comentários são apenas para suprimir alguns dos
-        //supostos "erros" em que a IDE JetBrains PhpStorm estava acusando...
+        //supostos "erros" em que o plugin SonarLint, instalado na
+        // IDE JetBrains PhpStorm estava acusando...
     }
 
     /**

@@ -11,10 +11,12 @@ use EdukInfo\Models\Endereco;
 use EdukInfo\Models\Estado;
 use EdukInfo\Models\Genero;
 use EdukInfo\Models\TelefoneUsuario;
+use EdukInfo\Models\TipoCliente;
 use EdukInfo\Models\Usuario;
 use Exception;
 use Firebase\JWT\JWT;
 use InvalidArgumentException;
+use PHPMailer\PHPMailer\PHPMailer;
 
 require_once "../inicializador.php";
 
@@ -129,5 +131,32 @@ $resultado = [
     "validade" => str_replace('-03:00','',$validade),
     "usuario" => $objUsuario->toJsonArray()
 ];
+/** @var PHPMailer $phpmailer */
+$phpmailer = require(__DIR__.'/../mail.php');
+$phpmailer->addAddress($objUsuario->getEmail(),$objUsuario->getNome());
+$tratamentoPessoa = match ($objUsuario->getGenero()) {
+    Genero::masculino => "sr ",
+    Genero::feminino => "sra ",
+    default => ""
+};
+$phpmailer->isHTML(true);
+$boasVindas = ($objUsuario->getGenero() === Genero::feminino ? 'bem-vinda' : 'bem-vindo');
+$cumprimentaUsuario = ($objUsuario->getTipoCliente() === TipoCliente::PessoaJuridica ?
+    ('Representande da ' . $objUsuario->getNome()) :
+    ($tratamentoPessoa . $objUsuario->getNome())
+);
+//$phpmailer->AltBody("Seja muito ${$boasVindas} ao nosso site ${$tratamentoPessoa}!");
+$phpmailer->Subject = "Olá $cumprimentaUsuario, seja muito $boasVindas";
+$phpmailer->Body = '<!doctype html>';
+$phpmailer->Body .= '<html lang="pt-br">';
+$phpmailer->Body .= '<head>'."<title>$boasVindas</title>".'</head>';
+$phpmailer->Body .= "<body>";
+$phpmailer->Body .= "<h1>Seja muito $boasVindas $tratamentoPessoa!</h1> ao nosso site!";
+$phpmailer->Body .= "<h3>Esperamos que aprenda bastante com nossos cursos!</h3>";
+$phpmailer->Body .= "<h6>Utilize sempre seu e-mail ".$objUsuario->getEmail()." para fazer seu login e a senha em que você usou no cadastro.</h6>";
+$phpmailer->Body .= "</body></html>";
+try {
+    $phpmailer->send();
+} catch (Exception) {}
 
 echo json_encode($resultado);

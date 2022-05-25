@@ -25,7 +25,7 @@ if($_SERVER['REQUEST_METHOD'] !== 'POST'){
 
 $input = json_decode(file_get_contents('php://input'));
 
-$objUsuario = Usuario::getUsuarioByEmail($_POST['email']);
+$objUsuario = Usuario::getUsuarioByEmail($_POST['usuario']);
 
 if($objUsuario === null) {
     $statusCode = StatusCodes::NotFound;

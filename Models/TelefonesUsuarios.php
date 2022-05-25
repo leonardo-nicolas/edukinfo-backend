@@ -92,7 +92,7 @@ class TelefonesUsuarios implements Iterator
     }
 
     #[ArrayShape([[
-        "id" => "int",
+        "id" => "int|null",
         "descricao" => "string",
         "codigoArea" => "int",
         "numero" => "string",
@@ -108,7 +108,7 @@ class TelefonesUsuarios implements Iterator
         $arrays = [];
         foreach ($this->arraysTelefone as $val) {
             $arrays[] = [
-                "id" => $val->getId() ?? -1,
+                "id" => $val->getId(),
                 "descricao" => $val->getDescricao(),
                 "codigoArea" => $val->getDDD(),
                 "numero" => $val->getTelefone(),

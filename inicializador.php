@@ -22,6 +22,7 @@ foreach ($dirs as $dir) {
         }
     }
 }
+
 ini_set('default_charset','UTF-8');
 header('Content-Type: charset=utf-8');
 header("Access-Control-Allow-Origin:*");
