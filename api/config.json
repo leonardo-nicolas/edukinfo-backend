@@ -1,0 +1,17 @@
+{
+  "mail": {
+	"host": "smtp.localhost",
+	"port": 465,
+	"secure": true,
+	"user": "usuario@localhost",
+	"password": "senha-smtp-exemplo-12345"
+  },
+  "db":{
+	"sgbd": "mysql",
+	"host": "localhost",
+	"port": 3306,
+	"db": "edukinfo",
+	"user": "mysql_usuario_da_maquina_local_do_usuario",
+	"password": "root_senha_da_maquina_local_do_usuario"
+  }
+}

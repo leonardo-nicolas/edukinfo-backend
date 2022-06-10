@@ -4,7 +4,7 @@
 =======
 >>>>>>> 5bcd45ac1c08dea726f213db027e2c75e68b7533
 composer.phar
-/vendor/
+/api/vendor/
 
 # Commit your application's lock file https://getcomposer.org/doc/01-basic-usage.md#commit-your-composer-lock-file-to-version-control
 # You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
@@ -159,12 +159,12 @@ local.properties
 
 ### Dreamweaver template
 # DW Dreamweaver added files
-_notes
-_compareTemp
-configs/
-dwsync.xml
-dw_php_codehinting.config
-*.mno
+/api/_notes
+/api/_compareTemp
+/api/configs/
+/api/dwsync.xml
+/api/dw_php_codehinting.config
+/api/*.mno
 
 ### CakePHP template
 # CakePHP 3
@@ -195,26 +195,26 @@ dw_php_codehinting.config
 
 ### Laravel template
 /vendor/
-node_modules/
-npm-debug.log
-yarn-error.log
+/node_modules/
+/npm-debug.log
+/yarn-error.log
 
 # Laravel 4 specific
-bootstrap/compiled.php
-app/storage/
+/bootstrap/compiled.php
+/app/storage/
 
 # Laravel 5 & Lumen specific
-public/storage
-public/hot
+/public/storage
+/public/hot
 
 # Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/hot
+/public_html/storage
+/public_html/hot
 
 storage/*.key
 .env
-Homestead.yaml
-Homestead.json
+/Homestead.yaml
+/Homestead.json
 /.vagrant
 .phpunit.result.cache
 
@@ -242,14 +242,17 @@ Homestead.json
 
 # custom ignore
 apache-server-local/
-vendor/
+/api/vendor/
 
-*.asc
-dados.json
-*.txt
+/api/*.asc
+/api/dados.json
+/api/*.txt
 <<<<<<< HEAD
 >>>>>>> d01128e (Arquivos adicionados)
 =======
 >>>>>>> d01128e1a5646784747c9e76fd70d6c0f11315f8
 =======
 >>>>>>> 5bcd45ac1c08dea726f213db027e2c75e68b7533
+/api/config-local.json
+/api/dados.json
+/bkp/

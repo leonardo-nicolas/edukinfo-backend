@@ -1,0 +1,13 @@
+# ./site/.htaccess: Este arquivo é usado para configurar o mod_rewrite para o site, ocultando as extensões do PHP.
+
+RewriteEngine on
+
+# Rewrite /foo/bar.php to /for
+	RewriteRule ^([^.]+)$ %{REQUEST_URI}.php [L]
+
+# Return 404 if original request is "/foo/bar.php" (as example)
+# RewriteCond %{THE_REQUEST} "^[^ ]* .*?\.php[? ].*$"
+# RewriteRule .* - [L,R=404]
+
+# NOTE! FOR APACHE ON WINDOWS: Add [NC] to RewriteCond like this:
+# RewriteCond %{THE_REQUEST} "^[^ ]* .*?\.php[? ].*$" [NC]

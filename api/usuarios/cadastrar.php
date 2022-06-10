@@ -118,7 +118,7 @@ try {
     ],$ex,$classeErro);
 }
 $hoje = new DateTime();
-$duracao = new DateInterval("P6H");
+$duracao = new DateInterval("P1D");
 $mais7dias = $hoje->add($duracao);
 $validade = $mais7dias->format(DateTimeInterface::W3C);
 
@@ -128,7 +128,7 @@ $jwt = JWT::encode([
 ],'chave_tosca','HS256');
 $resultado = [
     "jwt" => $jwt,
-    "validade" => str_replace('-03:00','',$validade),
+    "validade" => $validade,
     "usuario" => $objUsuario->toJsonArray()
 ];
 /** @var PHPMailer $phpmailer */
@@ -142,18 +142,18 @@ $tratamentoPessoa = match ($objUsuario->getGenero()) {
 $phpmailer->isHTML(true);
 $boasVindas = ($objUsuario->getGenero() === Genero::feminino ? 'bem-vinda' : 'bem-vindo');
 $cumprimentaUsuario = ($objUsuario->getTipoCliente() === TipoCliente::PessoaJuridica ?
-    ('Representande da ' . $objUsuario->getNome()) :
+	('Representande da ' . $objUsuario->getNome()) :
     ($tratamentoPessoa . $objUsuario->getNome())
 );
-//$phpmailer->AltBody("Seja muito ${$boasVindas} ao nosso site ${$tratamentoPessoa}!");
 $phpmailer->Subject = "Olá $cumprimentaUsuario, seja muito $boasVindas";
 $phpmailer->Body = '<!doctype html>';
 $phpmailer->Body .= '<html lang="pt-br">';
-$phpmailer->Body .= '<head>'."<title>$boasVindas</title>".'</head>';
+$phpmailer->Body .= "<head><title>$boasVindas</title></head>";
 $phpmailer->Body .= "<body>";
 $phpmailer->Body .= "<h1>Seja muito $boasVindas $tratamentoPessoa!</h1> ao nosso site!";
 $phpmailer->Body .= "<h3>Esperamos que aprenda bastante com nossos cursos!</h3>";
-$phpmailer->Body .= "<h6>Utilize sempre seu e-mail ".$objUsuario->getEmail()." para fazer seu login e a senha em que você usou no cadastro.</h6>";
+$emailUsuario = $objUsuario->getEmail();
+$phpmailer->Body .= "<h6>Utilize sempre seu e-mail $emailUsuario para fazer seu login e a senha em que você usou no cadastro.</h6>";
 $phpmailer->Body .= "</body></html>";
 try {
     $phpmailer->send();

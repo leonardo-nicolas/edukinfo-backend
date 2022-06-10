@@ -13,6 +13,7 @@ use EdukInfo\Functions\Validacao;
 use Exception;
 use InvalidArgumentException;
 use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\Pure;
 use LengthException;
 use mysqli;
 use mysqli_sql_exception;
@@ -43,7 +44,7 @@ class Usuario
         $this->enderecosUsuario = new Enderecos();
     }
 
-    public function getTelefonesUsuario(): TelefonesUsuarios {
+	public function getTelefonesUsuario(): TelefonesUsuarios {
         return $this->telefonesUsuario;
     }
 
@@ -399,8 +400,11 @@ class Usuario
             ->setEmail((string)$resultado['email'])
             ->setSenhaDoDB((string)$resultado['senha']);
 
-        $buscaEndereco = $db->prepare("SELECT * FROM Endereco_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY rand(id) DESC");
-        $buscaEndereco->execute();
+		$id = $objUsuario->getId();
+        $buscaEndereco = $db->prepare('SELECT * FROM Endereco_usuarios 
+         	WHERE id_usuario = ? ORDER BY rand(id) DESC');
+        $buscaEndereco->bind_param('i',$id);
+		$buscaEndereco->execute();
         $resultadoEnderecos = $buscaEndereco->get_result();
         while($linhasEnd = $resultadoEnderecos->fetch_assoc()){
             $objUsuario->setEnderecosUsuario(
@@ -416,7 +420,9 @@ class Usuario
                     ->setCep((string)$linhasEnd['cep'])
             );
         }
-        $buscaTelefone = $db->prepare("SELECT * FROM Telefones_usuarios WHERE id_usuario = " . $objUsuario->getId() . " ORDER BY rand(id) DESC");
+        $buscaTelefone = $db->prepare('SELECT * FROM Telefones_usuarios 
+         	WHERE id_usuario = ? ORDER BY rand(id) DESC');
+		$buscaTelefone->bind_param("i",$id);
         $buscaTelefone->execute();
         $resultadoEnderecos = $buscaTelefone->get_result();
         while($linhasEnd = $resultadoEnderecos->fetch_assoc()){
@@ -447,14 +453,18 @@ class Usuario
         /** @var mysqli $db */
         $existencia = [
             self::getUsuarioByEmail($usuario->email),
-            self::getUsuarioByDocumento(($usuario->tipoCliente === TipoCliente::PessoaFisica ? 'pf' : 'pj') . $usuario->documento)
+            self::getUsuarioByDocumento(
+				($usuario->tipoCliente === TipoCliente::PessoaFisica ? 'pf' : 'pj')
+				. $usuario->documento
+            )
         ];
         if(!in_array(null,$existencia)) {
             throw new RegistroDuplicadoException($usuario->email);
         }
         $db = require('../db.php');
         $db->autocommit(false);
-        $insert = $db->prepare('INSERT INTO Usuarios(nome, sobrenome, documento, genero, aniversario, email, senha) VALUES (?,?,?,?,?,?,?)');
+        $insert = $db->prepare('INSERT INTO Usuarios(
+                     nome, sobrenome, documento, genero, aniversario, email, senha) VALUES (?,?,?,?,?,?,?)');
         $documento = $usuario->tipoCliente === TipoCliente::PessoaFisica ? 'PF' : 'PJ' ;
         $documento .= $usuario->documento;
         $generoStr = $usuario->genero === Genero::feminino ? 'F' : 'M';
@@ -484,7 +494,9 @@ class Usuario
         unset($insert);
 
         foreach ($usuario->enderecosUsuario as $endUsuarios){ //Adiciona cada endereço informado pelo usuário
-            $insert = $db->prepare('INSERT INTO Endereco_usuarios (id_usuario,descricao,finalidade,endereco,numero,complemento,bairro,cidade,estado,cep) VALUES (?,?,?,?,?,?,?,?,?,?)');
+            $insert = $db->prepare('INSERT INTO Endereco_usuarios (
+                               id_usuario,descricao,finalidade,
+                               endereco,numero,complemento,bairro,cidade,estado,cep) VALUES (?,?,?,?,?,?,?,?,?,?)');
             $desc = $endUsuarios->getDescricao();
             $fin = $endUsuarios->getFinalidade();
             $end = $endUsuarios->getEndereco();
@@ -496,10 +508,12 @@ class Usuario
             $estd = $objEstado->value;
             $cep = $endUsuarios->getCep();
             // string, int, decimal, bool
-            $insert->bind_param("isssisssss",$idNovoUsuario,$desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep);
+            $insert->bind_param("isssisssss",$idNovoUsuario,$desc,$fin,
+	            $end,$num,$comp,$bai,$cid,$estd,$cep);
             if(!$insert->execute()) {
                 $db->rollback();
-                unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert,$documento,$generoStr,$usuario,$usuarioRet);
+                unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert,
+	                $documento,$generoStr,$usuario,$usuarioRet);
                 throw new mysqli_sql_exception("Ocorreu algum erro desconhecido com o MySQL");
             }
             $usuarioRet->setEnderecosUsuario(
@@ -517,7 +531,10 @@ class Usuario
             unset($desc,$fin,$end,$num,$comp,$bai,$cid,$estd,$cep,$insert);
         }
         foreach ($usuario->telefonesUsuario as $telUsuario){ //Adiciona cada telefone informado pelo usuário
-            $insert = $db->prepare('INSERT INTO Telefones_usuarios (id_usuario, descricao, ddd, telefone, whatsapp, telegram, wechat, sms, chamadas) VALUES (?,?,?,?,?,?,?,?,?)');
+            $insert = $db->prepare('INSERT INTO Telefones_usuarios (
+                                id_usuario, descricao, 
+                                ddd, telefone, 
+                                whatsapp, telegram, wechat, sms, chamadas) VALUES (?,?,?,?,?,?,?,?,?)');
             $desc = $telUsuario->getDescricao();
             $ddd = $telUsuario->getDDD();
             $tel = $telUsuario->getTelefone();
@@ -551,4 +568,99 @@ class Usuario
         $db->autocommit(true);
         return $usuarioRet;
     }
+
+	/**
+	 * Este metodo gera um token temporario, armazena no MySQL e retorna este token gerado.
+	 * @param string $email O e-mail do usuario que solicitou a troca de senha.
+	 * @return string|null
+	 */
+	public static function recuperarSenha(string $email): ?string {
+		/** @var mysqli $db */
+		$db = require(__DIR__ . '/../db.php');
+		$stmtGetUsuario = $db->prepare('SELECT id FROM Usuarios WHERE email = ?');
+		$stmtGetUsuario->bind_param('s', $email);
+		$stmtGetUsuario->execute();
+		$stmtGetUsuario->bind_result($id);
+		$db->autocommit(false);
+		$stmtRecuperacaoSenha = $db->prepare(
+			'INSERT INTO Recuperacao_senha (id_usuario, token_temporario,vencimento) VALUES 
+						(?, ?, ((now() + interval 1 day)))'
+		);
+		$token = uniqid(rand(), true);
+		$stmtRecuperacaoSenha->bind_param('is', $id, $token);
+		if($stmtRecuperacaoSenha->execute()){
+			$db->commit();
+			$db->close();
+			$db->autocommit(true);
+			return $token;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Obtem o somente o ID do usuario que solicitou a troca de senha, apenas informando o token gerado por ele.
+	 * @param string $token Token que o usuario recebeu por e-mail...
+	 * @return int|ErrosRecuperacaoSenha Se correr tudo bem, retorna o ID do usuario. Senao, retorna algum erro...
+	 */
+	public static function getIdUsuarioByToken(string $token):int|ErrosRecuperacaoSenha {
+		/** @var mysqli $db */
+		$db = require(__DIR__ . '/../db.php');
+		$stmtGetUsuarioRecupSenha = $db->prepare(
+			'SELECT id_usuario, vencimento FROM Recuperacao_senha 
+                              WHERE token_temporario = ? AND usado=false'
+		);
+		$stmtGetUsuarioRecupSenha->bind_param('s', $token);
+		$stmtGetUsuarioRecupSenha->execute();
+		if($stmtGetUsuarioRecupSenha->num_rows === 0){
+			$db->close();
+			return ErrosRecuperacaoSenha::TokenNaoEncontrado;
+		}
+		/**
+		 * @var int $id
+		 * @var DateTime $vencimento
+		 */
+		$stmtGetUsuarioRecupSenha->bind_result($id, $vencimento);
+		$agora = new DateTime();
+		$db->close();
+		if($agora > $vencimento) {
+			return ErrosRecuperacaoSenha::TokenVencido;
+		}
+		return $id;
+	}
+
+	/**
+	 * Este método troca definitivamente a senha do usuário, que está armazenado no banco de dados.
+	 * @param int $idUsuario O ID do usuário para trocar a senha
+	 * @param string $senha A nova senha do usuário.
+	 * @param string|null $token Caso foi solicitada a recuperação de senha, informar o token temporário
+	 * @return bool O retorno é autoindicativo: True para Sucesso e False para algum erro, lançado com excessão.
+	 */
+	public static function trocarSenha(int $idUsuario, string $senha):bool {
+		/** @var mysqli $db */
+		$db = require(__DIR__ . '/../db.php');
+		$db->autocommit(false);
+		$stmtAtualizaSenha = $db->prepare('UPDATE Usuarios SET senha = ? WHERE id = ?');
+		$stmtAtualizaSenha->bind_param('si', $senha, $idUsuario);
+		$stmtAtualizaSenha->execute();
+
+		$stmtInvalidaToken = $db->prepare('UPDATE Recuperacao_senha SET usado = true WHERE id_usuario = ?');
+		$stmtInvalidaToken->bind_param('i', $idUsuario);
+		$stmtInvalidaToken->execute();
+
+		$linhasAtualizadas = [
+			$stmtAtualizaSenha->affected_rows,
+			$stmtInvalidaToken->affected_rows
+		];
+		if(in_array(0, $linhasAtualizadas)) {
+			$db->rollback();
+			$resultado = false;
+		} else {
+			$db->commit();
+			$resultado = true;
+		}
+		$db->close();
+		$db->autocommit(true);
+		return $resultado;
+	}
 }

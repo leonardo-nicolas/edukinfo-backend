@@ -62,7 +62,7 @@ class Validacao {
     }
 
     public static function Email(string $email):bool{
-        return preg_match('/^[a-z\d\-._+&#]+@[a-z\d]+(.[a-z]{2,8})+$/i',$email);
+        return (bool)filter_var($email, FILTER_VALIDATE_EMAIL);
     }
 
     public static function Telefone(string $numero, bool $isCelular): bool {
