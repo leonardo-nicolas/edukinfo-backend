@@ -4,7 +4,7 @@ namespace EdukInfo;
 
 use mysqli;
 
-require_once(__DIR__."config.php");
+require_once(__DIR__."/config.php");
 $config = new Config();
 
 $bancoDeDados = new MySQLi(

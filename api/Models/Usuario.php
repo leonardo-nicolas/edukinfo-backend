@@ -461,7 +461,7 @@ class Usuario
         if(!in_array(null,$existencia)) {
             throw new RegistroDuplicadoException($usuario->email);
         }
-        $db = require('../db.php');
+        $db = require(__DIR__.'/../db.php');
         $db->autocommit(false);
         $insert = $db->prepare('INSERT INTO Usuarios(
                      nome, sobrenome, documento, genero, aniversario, email, senha) VALUES (?,?,?,?,?,?,?)');
@@ -577,23 +577,21 @@ class Usuario
 	public static function recuperarSenha(string $email): ?string {
 		/** @var mysqli $db */
 		$db = require(__DIR__ . '/../db.php');
-		$stmtGetUsuario = $db->prepare('SELECT id FROM Usuarios WHERE email = ?');
-		$stmtGetUsuario->bind_param('s', $email);
-		$stmtGetUsuario->execute();
-		$stmtGetUsuario->bind_result($id);
+		$id = self::getUsuarioByEmail($email)->getId();
 		$db->autocommit(false);
 		$stmtRecuperacaoSenha = $db->prepare(
 			'INSERT INTO Recuperacao_senha (id_usuario, token_temporario,vencimento) VALUES 
 						(?, ?, ((now() + interval 1 day)))'
 		);
 		$token = uniqid(rand(), true);
+
 		$stmtRecuperacaoSenha->bind_param('is', $id, $token);
 		if($stmtRecuperacaoSenha->execute()){
 			$db->commit();
-			$db->close();
 			$db->autocommit(true);
 			return $token;
 		} else {
+			$db->rollback();
 			return null;
 		}
 	}
@@ -603,16 +601,17 @@ class Usuario
 	 * @param string $token Token que o usuario recebeu por e-mail...
 	 * @return int|ErrosRecuperacaoSenha Se correr tudo bem, retorna o ID do usuario. Senao, retorna algum erro...
 	 */
-	public static function getIdUsuarioByToken(string $token):int|ErrosRecuperacaoSenha {
+	public static function getIdUsuarioByToken(string $token, bool $forcarMesmoTrocado = false):int|ErrosRecuperacaoSenha {
 		/** @var mysqli $db */
 		$db = require(__DIR__ . '/../db.php');
 		$stmtGetUsuarioRecupSenha = $db->prepare(
-			'SELECT id_usuario, vencimento FROM Recuperacao_senha 
-                              WHERE token_temporario = ? AND usado=false'
+			'SELECT id_usuario, vencimento, usado FROM Recuperacao_senha 
+                              WHERE token_temporario=? ORDER BY id DESC'
 		);
 		$stmtGetUsuarioRecupSenha->bind_param('s', $token);
 		$stmtGetUsuarioRecupSenha->execute();
-		if($stmtGetUsuarioRecupSenha->num_rows === 0){
+		$resultado = $stmtGetUsuarioRecupSenha->get_result();
+		if($resultado->num_rows === 0){
 			$db->close();
 			return ErrosRecuperacaoSenha::TokenNaoEncontrado;
 		}
@@ -620,20 +619,23 @@ class Usuario
 		 * @var int $id
 		 * @var DateTime $vencimento
 		 */
-		$stmtGetUsuarioRecupSenha->bind_result($id, $vencimento);
 		$agora = new DateTime();
+		$resultado1 = $resultado->fetch_assoc();
+		$id = $resultado1['id_usuario'];
+		$vencimento = $resultado1['vencimento'];
+		$usado = boolval($resultado1['usado']);
 		$db->close();
-		if($agora > $vencimento) {
-			return ErrosRecuperacaoSenha::TokenVencido;
-		}
-		return $id;
+		return match(true){
+			$agora <= $vencimento => ErrosRecuperacaoSenha::TokenVencido,
+			$usado && !$forcarMesmoTrocado => ErrosRecuperacaoSenha::TokenUsado,
+			default => $id
+		};
 	}
 
 	/**
 	 * Este método troca definitivamente a senha do usuário, que está armazenado no banco de dados.
 	 * @param int $idUsuario O ID do usuário para trocar a senha
 	 * @param string $senha A nova senha do usuário.
-	 * @param string|null $token Caso foi solicitada a recuperação de senha, informar o token temporário
 	 * @return bool O retorno é autoindicativo: True para Sucesso e False para algum erro, lançado com excessão.
 	 */
 	public static function trocarSenha(int $idUsuario, string $senha):bool {
@@ -641,6 +643,7 @@ class Usuario
 		$db = require(__DIR__ . '/../db.php');
 		$db->autocommit(false);
 		$stmtAtualizaSenha = $db->prepare('UPDATE Usuarios SET senha = ? WHERE id = ?');
+		$senha = Bcrypt::encrypt($senha,"2y",self::TRABALHOS_SENHA_BCRYPT);
 		$stmtAtualizaSenha->bind_param('si', $senha, $idUsuario);
 		$stmtAtualizaSenha->execute();
 
@@ -659,8 +662,8 @@ class Usuario
 			$db->commit();
 			$resultado = true;
 		}
-		$db->close();
 		$db->autocommit(true);
+		$db->close();
 		return $resultado;
 	}
 }

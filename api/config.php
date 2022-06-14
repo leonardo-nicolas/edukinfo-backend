@@ -13,7 +13,7 @@
  * exposições de credenciais e outros dados sensíveis.
  */
 namespace EdukInfo;
-
+const ARQUIVO_JSON_CONFIG = __DIR__ . '/config-local.json';
 class ConfigEmail{
 	public readonly string $host;
 	public readonly int $port;
@@ -21,8 +21,8 @@ class ConfigEmail{
 	public readonly string $senha;
 	public readonly string $usuario;
 	public function __construct(){
-		$jsonFile = file_get_contents(__DIR__."/config-email.json");
-		$json = json_decode($jsonFile);
+		$jsonFile = file_get_contents(ARQUIVO_JSON_CONFIG);
+		$json = json_decode($jsonFile)->mail;
 		$this->host = (string)$json->host;
 		$this->port = (int)$json->port;
 		$this->secure = (bool)$json->secure;
@@ -40,9 +40,9 @@ class ConfigBancoDeDados{
 	public readonly string $user;
 	public readonly string $password;
 	public function __construct(){
-		$jsonFile = file_get_contents(__DIR__ . "/config.json");
-		$json = json_decode($jsonFile);
-		$this->sgbd = (string)$json->sgbd;
+		$jsonFile = file_get_contents(ARQUIVO_JSON_CONFIG);
+		$json = json_decode($jsonFile)->db;
+		$this->sgbd = (string)$json->sgdb;
 		$this->host = (string)$json->host;
 		$this->port = (int)$json->port;
 		$this->db = (string)$json->db;
@@ -52,12 +52,24 @@ class ConfigBancoDeDados{
 	}
 }
 
+class JWT {
+	public readonly string $chave;
+	public readonly string $algoritmo;
+	public function __construct() {
+		$jsonFile = file_get_contents(ARQUIVO_JSON_CONFIG);
+		$json = json_decode($jsonFile)->jwt;
+		$this->chave = $json->chave;
+		$this->algoritmo = $json->criptografia;
+	}
+}
+
 class Config {
 	public readonly ConfigBancoDeDados $bancoDeDados;
 	public readonly ConfigEmail $email;
-
+	public readonly JWT $jwt;
 	public function __construct() {
 		$this->bancoDeDados = new ConfigBancoDeDados();
 		$this->email = new ConfigEmail();
+		$this->jwt = new JWT();
 	}
 }

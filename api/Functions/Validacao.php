@@ -53,7 +53,7 @@ class Validacao {
         $soma=0;
         for ($posicao = 0, $l = 6; $posicao < 13; ++$posicao) {
             $soma += intval(substr($cnpj,$posicao,1)) * $l;
-            $l = ($l == 2) ? 9 : $l - 1;
+            $l = ($l === 2) ? 9 : $l - 1;
         }
         $resto2 = $soma % 11;
         $sucesso[] = intval(substr($cnpj,13,1)) === ($resto2 < 2 ? 0 : 11 - $resto2);
@@ -76,4 +76,8 @@ class Validacao {
     public static function CEP($cep):bool {
         return preg_match('/\d{5}-?\d{3}/',$cep);
     }
+
+	public static function is_base64($s):bool {
+		return (bool) preg_match('/^[a-zA-Z\d\/\r\n+]*={0,2}$/', $s);
+	}
 }

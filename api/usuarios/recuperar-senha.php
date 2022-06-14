@@ -58,9 +58,8 @@ if(isset($_POST['email'])) {
 		('Representande da ' . $usuario->getNome()) :
 		($tratamentoPessoa . $usuario->getNome())
 	);
-//("Olá $cumprimentaUsuario! Segue o link para recuperar senha http://localhost/");
 
-	$tokenDB = Usuario::recuperarSenha();
+	$tokenDB = Usuario::recuperarSenha(strval($_POST['email']));
 	if($tokenDB !== null) {
 		$tokenDB = base64_encode($tokenDB);
 		$tokenDB = urlencode($tokenDB);
@@ -76,37 +75,54 @@ if(isset($_POST['email'])) {
 		$mail->Body .= '<p style="background: rgb(27,27,27); color:#FFF font-size: 14pt; margin: 0; padding: 0 2px;">';
 		$mail->Body .= "http://edukinfo.localhost/login/recuperarSenha?token=$tokenDB</p>";
 		$mail->Body .= "</body></html>";
+		$sent = $mail->send();
 		echo json_encode([
-			"codigo" => $mail->send() ? 200 : 400
+			"codigo" => $sent ? 200 : 400,
+			"mensagem" => $sent ? "OK {$usuario->getNome()}! E-mail enviado com sucesso!" : "Desculpe {$usuario->getNome()}! Mas, houve um erro ao enviar e-mail. Por favor, tente novamente!"
 		]);
 	}
 }
 
 if (isset($_POST['senha']) && (isset($_POST['id']) || isset($_POST['token']))) {
-	$token = isset($_POST['token']) ? base64_decode(strval($_POST['token'])) : null;
-	$idUsuario = $token !== null ?
-		Usuario::getIdUsuarioByToken($token) :
+	$tokenDecodificado = isset($_POST['token']) ? base64_decode(strval($_POST['token'])) : null;
+	$idUsuario = $tokenDecodificado !== null ?
+		Usuario::getIdUsuarioByToken($tokenDecodificado) :
 		Usuario::getUsuarioById($_POST['id'])?->getId() ?? ErrosRecuperacaoSenha::ErroInterno;
-	if($idUsuario instanceof ErrosRecuperacaoSenha) {
+	if($idUsuario instanceof ErrosRecuperacaoSenha) { 
+		// Este bloco é executado se ocorrer um erro de obtenção do id do usuário pelo token.
+		$forcarIdUsuarioPorToken = Usuario::getIdUsuarioByToken($tokenDecodificado,true);
+		$usuarioTemp = Usuario::getUsuarioById($forcarIdUsuarioPorToken);
 		$respostaJson = [
 			"codigo" => match ($idUsuario) {
 				ErrosRecuperacaoSenha::ErroInterno => StatusCodes::BadRequest,
 				ErrosRecuperacaoSenha::TokenNaoEncontrado => StatusCodes::NotFound,
-				ErrosRecuperacaoSenha::TokenVencido => StatusCodes::Forbidden,
+				ErrosRecuperacaoSenha::TokenVencido, ErrosRecuperacaoSenha::TokenUsado => StatusCodes::Forbidden,
+			},
+			"mensagem" => match ($idUsuario) {
+				ErrosRecuperacaoSenha::ErroInterno => "Ocorreu um erro interno ao tentar obter o token OU o ID informado é inválido!",
+				ErrosRecuperacaoSenha::TokenNaoEncontrado => "Desculpe, mas o token não foi encontrado...",
+				ErrosRecuperacaoSenha::TokenVencido => "Desculpe {$usuarioTemp?->getNome()}, mas o token expirou...",
+				ErrosRecuperacaoSenha::TokenUsado => "Desculpe {$usuarioTemp?->getNome()}, mas você já usou este " .
+					"token. Por favor, solicite uma nova recuperação de senha!",
 			}
 		];
-	} else {
+		unset($usuarioTemp,$forcarIdUsuarioPorToken);
+	} else { 
+		// Este bloco é executado quando o token é válido
+		$usuario = Usuario::getUsuarioById($idUsuario);
 		if(Usuario::trocarSenha($idUsuario, $_POST['senha'])) {
 			$respostaTrocaSenha = StatusCodes::Ok;
+			$mensagem = "Pronto {$usuario?->getNome()}! Sua senha foi alterada com sucesso!";
 		} else {
 			$respostaTrocaSenha = StatusCodes::BadRequest;
+			$mensagem = "Desculpe {$usuario?->getNome()}, mas não foi possível alterar sua senha!";
 		}
-		$respostaJson = ["codigo" => $respostaTrocaSenha];
-		unset($respostaTrocaSenha);
+		$respostaJson = ["codigo" => $respostaTrocaSenha, "mensagem" => $mensagem];
+		unset($respostaTrocaSenha,$usuario);
 	}
 
 	echo json_encode($respostaJson);
-	unset($idUsuario,$token,$respostaJson);
+	unset($idUsuario,$tokenDecodificado,$respostaJson);
 }
 
 unset($dadosNecessarios);

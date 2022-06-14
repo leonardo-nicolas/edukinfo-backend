@@ -27,4 +27,17 @@ class FuncoesDiversas {
         $arrAcentos[] = '/(Ñ)/';
         return preg_replace($arrAcentos,explode(" ","a A e E i I o O u U n N"),$str);
     }
+
+	/**
+	 * @param string $base64 - Base 64 a ser decodificada
+	 * @return string - Retorna a string de Base 64 decodificada
+	 * @throws InvalidArgumentException Ocorre quando $str não é um base64 válido
+	 */
+	public static function decodificar_base64(string $base64):string {
+		$base64Decodificado = base64_decode($base64);
+		if($base64Decodificado === false) {
+			throw new InvalidArgumentException("'$base64' não é um base64 válido!");
+		}
+		return $base64Decodificado;
+	}
 }

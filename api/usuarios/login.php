@@ -47,10 +47,11 @@ if($objUsuario === null) {
     }
     $mais7dias = (new DateTime())->add($duracao);
     $validade = $mais7dias->format(DateTimeInterface::W3C);
+	$config = new Config();
     $jwt = JWT::encode([
         "idUsuario"=>$objUsuario->getId() ?? -1,
         "validade"=>str_replace('-03:00','',$validade)
-    ],'chave_tosca','HS256');
+    ],$config->jwt->chave,$config->jwt->algoritmo);
     $resultado = [
         "jwt" => $jwt,
         "validade" => str_replace('-03:00','',$validade),

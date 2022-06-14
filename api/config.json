@@ -7,11 +7,15 @@
 	"password": "senha-smtp-exemplo-12345"
   },
   "db":{
-	"sgbd": "mysql",
+	"sgdb": "mysql",
 	"host": "localhost",
 	"port": 3306,
 	"db": "edukinfo",
 	"user": "mysql_usuario_da_maquina_local_do_usuario",
 	"password": "root_senha_da_maquina_local_do_usuario"
+  },
+  "jwt": {
+	"chave": "chave-jwt-exemplo-12345",
+	"criptografia": "HS256"
   }
 }

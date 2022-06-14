@@ -3,10 +3,10 @@ namespace EdukInfo;
 use PHPMailer\PHPMailer\PHPMailer;
 use EdukInfo;
 if(!class_exists(PHPMailer::class)){
-    require_once(__DIR__."/vendor/autoload.php");
+    require_once(__DIR__ . "/../vendor/autoload.php");
 }
 
-require_once(__DIR__."config.php");
+require_once(__DIR__."/config.php");
 $config = new Config();
 
 $phpmailer = new PHPMailer();

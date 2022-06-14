@@ -169,7 +169,8 @@ local.properties
 ### CakePHP template
 # CakePHP 3
 
-/vendor/*
+/api/vendor/*
+/vendor/
 /config/app.php
 
 /tmp/cache/models/*
@@ -194,7 +195,7 @@ local.properties
 /vendors/*
 
 ### Laravel template
-/vendor/
+/api/vendor/
 /node_modules/
 /npm-debug.log
 /yarn-error.log

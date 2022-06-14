@@ -1,6 +1,6 @@
 <?php
 namespace EdukInfo;
-require_once (__DIR__ . '/vendor/autoload.php');
+require_once (__DIR__ . '/../vendor/autoload.php');
 
 use Directory;
 
@@ -23,6 +23,7 @@ foreach ($dirs as $dir) {
     }
 }
 
+require_once (__DIR__ . '/config.php');
   
     // Dá a permissão de acesso de qualquer origem
     if (isset($_SERVER['HTTP_ORIGIN'])) {
@@ -36,11 +37,12 @@ foreach ($dirs as $dir) {
     // Cabeçalho HTTP 'Access-Control' são recebidos durante as requisições usando o método 'OPTIONS'
     if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-            header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, PATCH, HEAD, DELETE");
-        
-        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-            header("Access-Control-Allow-Headers: " . $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])) {
+	        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, PATCH, HEAD, DELETE");
+        }
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
+	        header("Access-Control-Allow-Headers: " . $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+        }
     
         exit(0);
     }
